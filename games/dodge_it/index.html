@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, orientation=landscape">
+    <title>よけろ！</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="rotate-message">画面を横にしてください</div>
+    <a href="../../index.html" class="back-button">🏠 メニュー</a>
+    <div id="score">点数: 0</div>
+    <div id="message" style="display:none; position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); color:red; font-size:40px; font-weight:bold; text-shadow:2px 2px white;">ぶつかった！</div>
+    <canvas id="gameCanvas"></canvas>
+    <script src="script.js"></script>
+</body>
+</html>
