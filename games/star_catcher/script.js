@@ -1,11 +1,12 @@
-const canvas = document.getElementById('gameCanvas');
-const ctx = canvas.getContext('2d');
+// Use shared init logic
+const { canvas, ctx, width: initialWidth, height: initialHeight } = setupCanvas('gameCanvas');
+let width = initialWidth;
+let height = initialHeight;
 
-let width = window.innerWidth;
-let height = window.innerHeight;
-
-canvas.width = width;
-canvas.height = height;
+window.addEventListener('resize', () => {
+    width = window.innerWidth;
+    height = window.innerHeight;
+});
 
 // Game State
 let stars = [];
@@ -15,16 +16,11 @@ let lastTime = 0;
 let spawnTimer = 0;
 const SPAWN_INTERVAL = 1000; // ms
 
-// Audio Context
+// Audio Context (Use Shared Helper)
 let audioCtx;
 
 function initAudio() {
-    if (!audioCtx) {
-        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    }
-    if (audioCtx.state === 'suspended') {
-        audioCtx.resume();
-    }
+    audioCtx = SharedAudio.init();
 }
 
 function playPopSound() {
@@ -165,14 +161,6 @@ function handleInput(e) {
         }
     }
 }
-
-// Event Listeners
-window.addEventListener('resize', () => {
-    width = window.innerWidth;
-    height = window.innerHeight;
-    canvas.width = width;
-    canvas.height = height;
-});
 
 canvas.addEventListener('mousedown', handleInput);
 canvas.addEventListener('touchstart', handleInput, { passive: false });

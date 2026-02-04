@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, orientation=landscape">
+    <meta name="theme-color" content="#000000">
+    <title>Kids Games Launcher</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="stylesheet" href="shared/style.css">
+    <style>
+        body {
+            background-color: #222;
+            overflow-y: auto; /* Allow scrolling for menu */
+        }
+        h1 {
+            text-align: center;
+            margin-top: 20px;
+        }
+        .game-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 20px;
+            padding: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .game-card {
+            background: #333;
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+            text-decoration: none;
+            color: white;
+            transition: transform 0.2s, background 0.2s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 150px;
+        }
+        .game-card:active {
+            transform: scale(0.95);
+            background: #444;
+        }
+        .icon {
+            font-size: 48px;
+            margin-bottom: 10px;
+        }
+        .title {
+            font-size: 18px;
+            font-weight: bold;
+        }
+        /* Override shared overflow:hidden for launcher */
+        body { overflow: auto !important; }
+    </style>
+</head>
+<body>
+    <h1>あそびをえらんでね (Choose a Game)</h1>
+    <div class="game-grid">
+        <a href="games/star_catcher/index.html" class="game-card">
+            <div class="icon">⭐</div>
+            <div class="title">Star Catcher<br>(スターキャッチャー)</div>
+        </a>
+        <a href="games/fireworks/index.html" class="game-card">
+            <div class="icon">🎆</div>
+            <div class="title">Fireworks<br>(花火)</div>
+        </a>
+        <a href="games/scribble/index.html" class="game-card">
+            <div class="icon">🎨</div>
+            <div class="title">Scribble<br>(おえかき)</div>
+        </a>
+        <a href="games/piano/index.html" class="game-card">
+            <div class="icon">🎹</div>
+            <div class="title">Piano<br>(ピアノ)</div>
+        </a>
+        <a href="games/bubble_wrap/index.html" class="game-card">
+            <div class="icon">🫧</div>
+            <div class="title">Bubble Wrap<br>(プチプチ)</div>
+        </a>
+        <a href="games/whack_a_mole/index.html" class="game-card">
+            <div class="icon">🐹</div>
+            <div class="title">Whack-a-Mole<br>(モグラたたき)</div>
+        </a>
+        <a href="games/raindrops/index.html" class="game-card">
+            <div class="icon">💧</div>
+            <div class="title">Raindrops<br>(雨の波紋)</div>
+        </a>
+        <a href="games/space_dodge/index.html" class="game-card">
+            <div class="icon">🚀</div>
+            <div class="title">Space Dodge<br>(宇宙飛行)</div>
+        </a>
+        <a href="games/fruit_catch/index.html" class="game-card">
+            <div class="icon">🍎</div>
+            <div class="title">Fruit Catch<br>(フルーツキャッチ)</div>
+        </a>
+        <a href="games/bouncing_ball/index.html" class="game-card">
+            <div class="icon">⚽</div>
+            <div class="title">Bouncing Ball<br>(ボール弾き)</div>
+        </a>
+    </div>
+
+    <!-- Reuse shared script for landscape check -->
+    <script src="shared/script.js"></script>
+    <script>
+        // Remove back button from launcher
+        document.addEventListener('DOMContentLoaded', () => {
+            const btn = document.getElementById('back-button');
+            if(btn) btn.style.display = 'none';
+        });
+    </script>
+</body>
+</html>
