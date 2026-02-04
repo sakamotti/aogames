@@ -33,6 +33,18 @@ A collection of 10 simple and fun web games for children. Choose your favorite a
 3. 「ホーム画面に追加」または「アプリをインストール」を選択。
 4. ホーム画面から「Kids Games」アイコンをタップして起動すると、全画面モードでプレイできます。
 
+## GitHub Pagesへのデプロイ方法 (Deployment)
+
+このプロジェクトは GitHub Pages で簡単に公開できるように設計されています。
+
+1. このリポジトリをフォークまたはクローンして、自身の GitHub アカウントにプッシュします。
+2. GitHub リポジトリの **Settings** > **Pages** に移動します。
+3. **Source** のセクションで **Deploy from a branch** を選択します。
+4. **Branch** で `main` (または公開したいブランチ) を選択し、`/ (root)` を選択して **Save** を押します。
+5. 数分後、`https://<username>.github.io/<repo-name>/` でゲームが公開されます。
+
+すべてのパスは相対パスで記述されているため、サブディレクトリ上でも問題なく動作します。
+
 ## プロジェクト規約 (Project Regulations)
 
 - **Android対応**: 全てのゲームはAndroid ChromeのPWAとして動作し、インストール可能です。
