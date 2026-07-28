@@ -1,112 +1,126 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, orientation=landscape">
-    <meta name="theme-color" content="#000000">
-    <title>Kids Games Launcher</title>
-    <link rel="manifest" href="manifest.json">
-    <link rel="stylesheet" href="shared/style.css">
-    <style>
-        body {
-            background-color: #222;
-            overflow-y: auto; /* Allow scrolling for menu */
-        }
-        h1 {
-            text-align: center;
-            margin-top: 20px;
-        }
-        .game-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-            gap: 20px;
-            padding: 20px;
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-        .game-card {
-            background: #333;
-            border-radius: 15px;
-            padding: 20px;
-            text-align: center;
-            text-decoration: none;
-            color: white;
-            transition: transform 0.2s, background 0.2s;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 150px;
-        }
-        .game-card:active {
-            transform: scale(0.95);
-            background: #444;
-        }
-        .icon {
-            font-size: 48px;
-            margin-bottom: 10px;
-        }
-        .title {
-            font-size: 18px;
-            font-weight: bold;
-        }
-        /* Override shared overflow:hidden for launcher */
-        body { overflow: auto !important; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#ffb84d">
+<meta name="description" content="3〜4歳向け・外出先でも遊べるオフライン対応の知育ミニゲーム集「あそびばこ」">
+<title>あそびばこ</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icons/favicon-32.png" sizes="32x32">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="stylesheet" href="shared/style.css">
+<style>
+  body { overflow-y: auto; position: static; min-height: 100dvh; }
+  .home-wrap {
+    min-height: 100dvh;
+    padding: calc(env(safe-area-inset-top, 0px) + 22px) 18px calc(env(safe-area-inset-bottom, 0px) + 28px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .home-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: clamp(26px, 6vw, 40px);
+    margin: 0 0 4px;
+  }
+  .home-title img { width: 1.15em; height: 1.15em; border-radius: 26%; box-shadow: var(--shadow-soft); }
+  .home-sub {
+    margin: 0 0 22px;
+    font-size: clamp(13px, 3vw, 16px);
+    font-weight: 600;
+    color: var(--ink-soft);
+  }
+  .game-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 18px;
+    width: 100%;
+    max-width: 900px;
+  }
+  .game-tile {
+    --tile-color: var(--pink);
+    background: var(--white);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-soft);
+    padding: 18px 10px 14px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    aspect-ratio: 1 / 0.92;
+    transition: transform 0.1s ease-out;
+    border: 4px solid var(--tile-color);
+  }
+  .game-tile:active { transform: scale(0.94); }
+  .game-tile__emoji {
+    font-size: clamp(40px, 9vw, 60px);
+    line-height: 1;
+    margin-bottom: 10px;
+  }
+  .game-tile__label {
+    font-size: clamp(15px, 3.2vw, 19px);
+    color: var(--ink);
+    text-align: center;
+  }
+  .home-footer {
+    margin-top: 26px;
+    font-size: 12px;
+    color: var(--ink-soft);
+    text-align: center;
+    max-width: 480px;
+    line-height: 1.6;
+  }
+</style>
 </head>
 <body>
-    <h1>あそびをえらんでね (Choose a Game)</h1>
+  <div class="home-wrap">
+    <h1 class="home-title"><img src="icons/icon-192.png" alt=""> あそびばこ</h1>
+    <p class="home-sub">すきな あそびを タップしてね</p>
+
     <div class="game-grid">
-        <a href="games/star_catcher/index.html" class="game-card">
-            <div class="icon">⭐</div>
-            <div class="title">Star Catcher<br>(スターキャッチャー)</div>
-        </a>
-        <a href="games/fireworks/index.html" class="game-card">
-            <div class="icon">🎆</div>
-            <div class="title">Fireworks<br>(花火)</div>
-        </a>
-        <a href="games/scribble/index.html" class="game-card">
-            <div class="icon">🎨</div>
-            <div class="title">Scribble<br>(おえかき)</div>
-        </a>
-        <a href="games/piano/index.html" class="game-card">
-            <div class="icon">🎹</div>
-            <div class="title">Piano<br>(ピアノ)</div>
-        </a>
-        <a href="games/bubble_wrap/index.html" class="game-card">
-            <div class="icon">🫧</div>
-            <div class="title">Bubble Wrap<br>(プチプチ)</div>
-        </a>
-        <a href="games/whack_a_mole/index.html" class="game-card">
-            <div class="icon">🐹</div>
-            <div class="title">Whack-a-Mole<br>(モグラたたき)</div>
-        </a>
-        <a href="games/raindrops/index.html" class="game-card">
-            <div class="icon">💧</div>
-            <div class="title">Raindrops<br>(雨の波紋)</div>
-        </a>
-        <a href="games/space_dodge/index.html" class="game-card">
-            <div class="icon">🚀</div>
-            <div class="title">Space Dodge<br>(宇宙飛行)</div>
-        </a>
-        <a href="games/fruit_catch/index.html" class="game-card">
-            <div class="icon">🍎</div>
-            <div class="title">Fruit Catch<br>(フルーツキャッチ)</div>
-        </a>
-        <a href="games/bouncing_ball/index.html" class="game-card">
-            <div class="icon">⚽</div>
-            <div class="title">Bouncing Ball<br>(ボール弾き)</div>
-        </a>
+      <a class="game-tile" style="--tile-color:var(--pink)" href="games/bubble-pop/index.html">
+        <div class="game-tile__emoji">🫧</div>
+        <div class="game-tile__label">しゃぼんだま</div>
+      </a>
+      <a class="game-tile" style="--tile-color:var(--purple)" href="games/finger-paint/index.html">
+        <div class="game-tile__emoji">🎨</div>
+        <div class="game-tile__label">おえかき</div>
+      </a>
+      <a class="game-tile" style="--tile-color:var(--orange)" href="games/animal-sounds/index.html">
+        <div class="game-tile__emoji">🐶</div>
+        <div class="game-tile__label">どうぶつ</div>
+      </a>
+      <a class="game-tile" style="--tile-color:var(--blue)" href="games/fireworks/index.html">
+        <div class="game-tile__emoji">🎆</div>
+        <div class="game-tile__label">はなび</div>
+      </a>
+      <a class="game-tile" style="--tile-color:var(--yellow)" href="games/star-catch/index.html">
+        <div class="game-tile__emoji">⭐</div>
+        <div class="game-tile__label">ほしとり</div>
+      </a>
+      <a class="game-tile" style="--tile-color:var(--teal)" href="games/shape-sorter/index.html">
+        <div class="game-tile__emoji">🧩</div>
+        <div class="game-tile__label">かたちあわせ</div>
+      </a>
+      <a class="game-tile" style="--tile-color:var(--green)" href="games/color-hunt/index.html">
+        <div class="game-tile__emoji">🌈</div>
+        <div class="game-tile__label">いろさがし</div>
+      </a>
+      <a class="game-tile" style="--tile-color:var(--coral)" href="games/rain-ripples/index.html">
+        <div class="game-tile__emoji">💧</div>
+        <div class="game-tile__label">あめふり</div>
+      </a>
     </div>
 
-    <!-- Reuse shared script for landscape check -->
-    <script src="shared/script.js"></script>
-    <script>
-        // Remove back button from launcher
-        document.addEventListener('DOMContentLoaded', () => {
-            const btn = document.getElementById('back-button');
-            if(btn) btn.style.display = 'none';
-        });
-    </script>
+    <p class="home-footer">保護者の方へ：広告・課金・通信は一切ありません。オフラインでも遊べます。<br>音を消すには右上の 🔊 ボタンをタップしてください。</p>
+  </div>
+
+  <script src="shared/app.js"></script>
+  <script>
+    KidsApp.initCommon({ home: false });
+  </script>
 </body>
 </html>
