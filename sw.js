@@ -2,7 +2,7 @@
 // (the whole point: this app is meant to be used out and about).
 // Paths are relative to this file's own location, so it works whether the
 // site is hosted at a domain root or a GitHub Pages project subpath.
-const CACHE_VERSION = 'v2';
+const CACHE_VERSION = 'v3';
 const CACHE_NAME = `asobibako-${CACHE_VERSION}`;
 
 const PRECACHE_URLS = [
@@ -17,6 +17,9 @@ const PRECACHE_URLS = [
   'icons/icon-maskable-512.png',
   'icons/apple-touch-icon.png',
   'icons/favicon-32.png',
+  'icons/characters/kuma.png',
+  'icons/characters/neko.png',
+  'icons/characters/usagi.png',
   'games/bubble-pop/index.html',
   'games/bubble-pop/script.js',
   'games/finger-paint/index.html',
@@ -33,6 +36,12 @@ const PRECACHE_URLS = [
   'games/color-hunt/script.js',
   'games/rain-ripples/index.html',
   'games/rain-ripples/script.js',
+  'games/animal-quiz/index.html',
+  'games/animal-quiz/script.js',
+  'games/memory-match/index.html',
+  'games/memory-match/script.js',
+  'games/counting/index.html',
+  'games/counting/script.js',
 ];
 
 self.addEventListener('install', (event) => {

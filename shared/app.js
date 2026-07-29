@@ -271,6 +271,32 @@
   function rand(min, max) { return Math.random() * (max - min) + min; }
   function choice(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
 
+  // ---------------------------------------------------------------------
+  // Original mascot cast (NOT any existing licensed character) used as a
+  // friendly "host" in quiz/counting style games.
+  // ---------------------------------------------------------------------
+  const CHARACTERS = [
+    { id: 'kuma', name: 'くまた', img: BASE + 'icons/characters/kuma.png' },
+    { id: 'neko', name: 'みけ', img: BASE + 'icons/characters/neko.png' },
+    { id: 'usagi', name: 'ぴょん', img: BASE + 'icons/characters/usagi.png' },
+  ];
+
+  // A round speech bubble next to a mascot portrait, for game prompts.
+  function mascotBubble(container, { img, name = '', text = '' } = {}) {
+    const wrap = document.createElement('div');
+    wrap.className = 'mascot-row';
+    wrap.innerHTML =
+      `<img class="mascot-avatar" src="${img}" alt="${name}">` +
+      `<div class="mascot-speech"><span class="mascot-speech__text"></span></div>`;
+    container.appendChild(wrap);
+    const textEl = wrap.querySelector('.mascot-speech__text');
+    function setText(t) {
+      textEl.textContent = t;
+    }
+    setText(text);
+    return { el: wrap, setText };
+  }
+
   function initCommon(opts = {}) {
     document.addEventListener(
       'pointerdown',
@@ -299,5 +325,7 @@
     initCommon,
     rand,
     choice,
+    CHARACTERS,
+    mascotBubble,
   };
 })(window);

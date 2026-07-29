@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#efeaff">
+<title>しんけいすいじゃく - あそびばこ</title>
+<link rel="manifest" href="../../manifest.json">
+<link rel="icon" href="../../icons/favicon-32.png" sizes="32x32">
+<link rel="stylesheet" href="../../shared/style.css">
+<style>
+  body { background: linear-gradient(160deg, #efeaff, #ffeef5); overflow: hidden; }
+  .board-wrap {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: calc(var(--safe-top) + 66px) 3vw calc(var(--safe-bottom) + 16px);
+  }
+  .memory-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(60px, 1fr));
+    gap: 2.6vmin;
+    width: 100%;
+    max-width: 620px;
+    max-height: 100%;
+    perspective: 1200px;
+  }
+  .card { aspect-ratio: 1 / 1; cursor: pointer; }
+  .card-inner {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    transition: transform 0.4s;
+    transform-style: preserve-3d;
+  }
+  .card.flipped .card-inner { transform: rotateY(180deg); }
+  .card.matched { animation: card-settle 500ms ease-out; }
+  .card.matched .card-inner { opacity: 0.5; }
+  @keyframes card-settle {
+    0%, 100% { transform: scale(1); }
+    40% { transform: scale(1.12); }
+  }
+  .card-face {
+    position: absolute;
+    inset: 0;
+    backface-visibility: hidden;
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: var(--shadow-soft);
+    font-size: min(9vw, 9vh);
+  }
+  .card-front { background: linear-gradient(160deg, var(--purple), var(--blue)); color: rgba(255,255,255,0.75); font-size: min(6vw, 6vh); }
+  .card-back { background: var(--white); transform: rotateY(180deg); }
+</style>
+</head>
+<body>
+  <div class="board-wrap">
+    <div class="memory-grid" id="grid"></div>
+  </div>
+  <script src="../../shared/app.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>

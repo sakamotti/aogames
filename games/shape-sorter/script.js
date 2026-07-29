@@ -8,14 +8,33 @@
     { id: 'square', color: '#2ec4b6' },
     { id: 'triangle', color: '#ffd23f' },
     { id: 'star', color: '#a78bfa' },
+    { id: 'hexagon', color: '#4ea8de' },
+    { id: 'heart', color: '#ff8a7a' },
   ];
-  const SLOTS_X = [0.16, 0.39, 0.61, 0.84];
+  // Two rows of three so six shapes still get generous tap targets.
+  const HOLE_SLOTS = [
+    { fx: 0.2, fy: 0.22 }, { fx: 0.5, fy: 0.22 }, { fx: 0.8, fy: 0.22 },
+    { fx: 0.2, fy: 0.44 }, { fx: 0.5, fy: 0.44 }, { fx: 0.8, fy: 0.44 },
+  ];
+  const PIECE_SLOTS = [
+    { fx: 0.2, fy: 0.68 }, { fx: 0.5, fy: 0.68 }, { fx: 0.8, fy: 0.68 },
+    { fx: 0.2, fy: 0.9 }, { fx: 0.5, fy: 0.9 }, { fx: 0.8, fy: 0.9 },
+  ];
 
   function starPointsStr(cx, cy, outerR, innerR) {
     const pts = [];
     for (let i = 0; i < 10; i++) {
       const r = i % 2 === 0 ? outerR : innerR;
       const a = -Math.PI / 2 + (Math.PI * i) / 5;
+      pts.push(`${cx + Math.cos(a) * r},${cy + Math.sin(a) * r}`);
+    }
+    return pts.join(' ');
+  }
+
+  function polyPointsStr(cx, cy, r, sides) {
+    const pts = [];
+    for (let i = 0; i < sides; i++) {
+      const a = -Math.PI / 2 + (Math.PI * 2 * i) / sides;
       pts.push(`${cx + Math.cos(a) * r},${cy + Math.sin(a) * r}`);
     }
     return pts.join(' ');
@@ -28,6 +47,8 @@
     if (id === 'square') return `<rect x="12" y="12" width="76" height="76" rx="14" ${common}/>`;
     if (id === 'triangle') return `<polygon points="50,10 90,88 10,88" ${common}/>`;
     if (id === 'star') return `<polygon points="${starPointsStr(50, 52, 42, 18)}" ${common}/>`;
+    if (id === 'hexagon') return `<polygon points="${polyPointsStr(50, 50, 42, 6)}" ${common}/>`;
+    if (id === 'heart') return `<path d="M50,86 C14,62 8,34 26,20 C38,10 50,18 50,30 C50,18 62,10 74,20 C92,34 86,62 50,86 Z" ${common}/>`;
     return '';
   }
 
@@ -50,8 +71,8 @@
   function layoutSize() {
     const w = board.clientWidth;
     const h = board.clientHeight;
-    const base = Math.min(w / 4.6, h / 3.4);
-    holeSize = Math.max(70, Math.min(150, base));
+    const base = Math.min(w / 3.6, h / 6.2);
+    holeSize = Math.max(52, Math.min(130, base));
     pieceSize = holeSize * 0.86;
   }
 
@@ -68,27 +89,29 @@
     SHAPES.forEach((shape, i) => {
       const holeWrap = document.createElement('div');
       holeWrap.className = 'hole';
-      const p = posFor(SLOTS_X[i], 0.27);
+      const slot = HOLE_SLOTS[i];
+      const p = posFor(slot.fx, slot.fy);
       holeWrap.style.left = p.x + 'px';
       holeWrap.style.top = p.y + 'px';
       const svg = makeSVG(shape.id, holeSize, { fill: 'rgba(255,255,255,0.5)', stroke: shape.color, strokeWidth: 6, dash: '10 8' });
       holeWrap.appendChild(svg);
       board.appendChild(holeWrap);
-      holeEls.push({ shape, fx: SLOTS_X[i], fy: 0.27, el: holeWrap, filled: false });
+      holeEls.push({ shape, fx: slot.fx, fy: slot.fy, el: holeWrap, filled: false });
     });
 
     const order = SHAPES.map((s, i) => i).sort(() => Math.random() - 0.5);
-    order.forEach((shapeIdx, slot) => {
+    order.forEach((shapeIdx, i) => {
       const shape = SHAPES[shapeIdx];
+      const slot = PIECE_SLOTS[i];
       const pieceEl = document.createElement('div');
       pieceEl.className = 'piece';
-      const home = posFor(SLOTS_X[slot], 0.78);
+      const home = posFor(slot.fx, slot.fy);
       pieceEl.style.left = home.x + 'px';
       pieceEl.style.top = home.y + 'px';
       const svg = makeSVG(shape.id, pieceSize, { fill: shape.color, stroke: 'rgba(0,0,0,0.15)', strokeWidth: 3 });
       pieceEl.appendChild(svg);
       board.appendChild(pieceEl);
-      const piece = { shape, el: pieceEl, homeFx: SLOTS_X[slot], homeFy: 0.78, placed: false };
+      const piece = { shape, el: pieceEl, homeFx: slot.fx, homeFy: slot.fy, placed: false };
       pieces.push(piece);
       attachDrag(piece);
     });
