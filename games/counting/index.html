@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#eaf7ff">
+<title>かずのおともだち - あそびばこ</title>
+<link rel="manifest" href="../../manifest.json">
+<link rel="icon" href="../../icons/favicon-32.png" sizes="32x32">
+<link rel="stylesheet" href="../../shared/style.css">
+<style>
+  body { background: linear-gradient(160deg, #eaf7ff, #fff6e9); overflow: hidden; }
+  .counting-wrap {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: calc(var(--safe-top) + 70px) 16px calc(var(--safe-bottom) + 16px);
+  }
+  .mascot-row { margin-bottom: 12px; max-width: 92vw; }
+  .counting-area {
+    position: relative;
+    width: 100%;
+    max-width: 620px;
+    flex: 1;
+    min-height: 0;
+  }
+  .counting-area span {
+    position: absolute;
+    transform: translate(-50%, -50%);
+    font-size: min(11vw, 12vh);
+    filter: drop-shadow(0 4px 6px rgba(74,59,120,0.2));
+  }
+  .number-options {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 3vw;
+    width: 100%;
+    max-width: 520px;
+    margin-top: 10px;
+  }
+  .number-card {
+    aspect-ratio: 1 / 1;
+    background: var(--white);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-soft);
+    border: 5px solid transparent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: min(9vw, 9vh);
+    color: var(--ink);
+  }
+  .number-card:active { transform: scale(0.94); }
+  .number-card.correct { border-color: var(--green); animation: pop-correct 500ms ease-out; }
+  @keyframes pop-correct {
+    0% { transform: scale(1); }
+    40% { transform: scale(1.15); }
+    100% { transform: scale(1); }
+  }
+</style>
+</head>
+<body>
+  <div class="counting-wrap">
+    <div id="mascotHost"></div>
+    <div class="counting-area" id="area"></div>
+    <div class="number-options" id="options"></div>
+  </div>
+  <script src="../../shared/app.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>

@@ -8,11 +8,14 @@
   const POOL = [
     { name: 'あか', hex: '#ff5a5a' },
     { name: 'あお', hex: '#4ea8de' },
+    { name: 'みずいろ', hex: '#7ecbf0' },
     { name: 'きいろ', hex: '#ffd23f' },
     { name: 'みどり', hex: '#06d6a0' },
+    { name: 'きみどり', hex: '#b0e04c' },
     { name: 'ピンク', hex: '#ff6fa5' },
     { name: 'むらさき', hex: '#a78bfa' },
     { name: 'オレンジ', hex: '#ffb84d' },
+    { name: 'ちゃいろ', hex: '#a97452' },
   ];
 
   let blobs = [];
@@ -31,8 +34,8 @@
     blobs = [];
     const w = board.clientWidth;
     const h = board.clientHeight;
-    const size = Math.max(70, Math.min(150, Math.min(w, h) * 0.26));
-    const chosen = shuffle(POOL).slice(0, 6);
+    const size = Math.max(58, Math.min(130, Math.min(w, h) * 0.21));
+    const chosen = shuffle(POOL).slice(0, 8);
     const placed = [];
 
     chosen.forEach((c) => {
@@ -41,7 +44,7 @@
         x = KidsApp.rand(size * 0.6, w - size * 0.6);
         y = KidsApp.rand(size * 0.6, h - size * 0.6);
         tries++;
-      } while (tries < 40 && placed.some((p) => Math.hypot(p.x - x, p.y - y) < size * 1.05));
+      } while (tries < 60 && placed.some((p) => Math.hypot(p.x - x, p.y - y) < size * 1.02));
       placed.push({ x, y });
 
       const el = document.createElement('div');

@@ -193,6 +193,55 @@ button {
   }
 }
 
+/* ---------- Mascot host (speech bubble + character portrait) ---------- */
+.mascot-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.mascot-avatar {
+  width: 76px;
+  height: 76px;
+  border-radius: 50%;
+  background: var(--white);
+  box-shadow: var(--shadow-soft);
+  padding: 4px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.mascot-speech {
+  position: relative;
+  background: var(--white);
+  border-radius: 20px;
+  padding: 12px 18px;
+  box-shadow: var(--shadow-soft);
+  font-size: clamp(15px, 3.4vw, 19px);
+  line-height: 1.4;
+}
+
+.mascot-speech::before {
+  content: '';
+  position: absolute;
+  left: -9px;
+  top: 50%;
+  transform: translateY(-50%);
+  border-width: 8px 10px 8px 0;
+  border-style: solid;
+  border-color: transparent var(--white) transparent transparent;
+}
+
+/* Generic gentle "try again" shake for quiz-style wrong answers */
+.shake-x {
+  animation: shake-x 400ms ease;
+}
+@keyframes shake-x {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-8px); }
+  75% { transform: translateX(8px); }
+}
+
 .visually-hidden {
   position: absolute;
   width: 1px;

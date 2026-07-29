@@ -17,12 +17,12 @@
   }
 
   function spawn() {
-    const r = KidsApp.rand(22, 34);
+    const r = KidsApp.rand(18, 29);
     stars.push({
       x: KidsApp.rand(r, stage.width - r),
       y: -r,
       r,
-      vy: KidsApp.rand(30, 55),
+      vy: KidsApp.rand(48, 82),
       spin: KidsApp.rand(-1, 1),
       angle: 0,
       twinkle: KidsApp.rand(0, Math.PI * 2),
@@ -90,7 +90,7 @@
     const dt = Math.min(0.05, (now - last) / 1000);
     last = now;
 
-    if (now - lastSpawn > 900 && stars.length < 10) {
+    if (now - lastSpawn > 680 && stars.length < 11) {
       spawn();
       lastSpawn = now;
     }

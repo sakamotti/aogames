@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="theme-color" content="#ffb84d">
-<meta name="description" content="3〜4歳向け・外出先でも遊べるオフライン対応の知育ミニゲーム集「あそびばこ」">
+<meta name="description" content="4〜6歳向け・外出先でも遊べるオフライン対応の知育ミニゲーム集「あそびばこ」。くまた・みけ・ぴょんのなかまたちと一緒にあそぼう。">
 <title>あそびばこ</title>
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="icons/favicon-32.png" sizes="32x32">
@@ -60,6 +60,24 @@
     line-height: 1;
     margin-bottom: 10px;
   }
+  .game-tile__char {
+    width: clamp(48px, 10vw, 66px);
+    height: clamp(48px, 10vw, 66px);
+    margin-bottom: 10px;
+  }
+  .friends-row {
+    display: flex;
+    gap: 14px;
+    margin-bottom: 20px;
+  }
+  .friends-row img {
+    width: 46px;
+    height: 46px;
+    border-radius: 50%;
+    background: var(--white);
+    box-shadow: var(--shadow-soft);
+    padding: 2px;
+  }
   .game-tile__label {
     font-size: clamp(15px, 3.2vw, 19px);
     color: var(--ink);
@@ -78,7 +96,12 @@
 <body>
   <div class="home-wrap">
     <h1 class="home-title"><img src="icons/icon-192.png" alt=""> あそびばこ</h1>
-    <p class="home-sub">すきな あそびを タップしてね</p>
+    <p class="home-sub">くまた・みけ・ぴょんと いっしょに あそぼう！</p>
+    <div class="friends-row">
+      <img src="icons/characters/kuma.png" alt="くまた">
+      <img src="icons/characters/neko.png" alt="みけ">
+      <img src="icons/characters/usagi.png" alt="ぴょん">
+    </div>
 
     <div class="game-grid">
       <a class="game-tile" style="--tile-color:var(--pink)" href="games/bubble-pop/index.html">
@@ -91,7 +114,7 @@
       </a>
       <a class="game-tile" style="--tile-color:var(--orange)" href="games/animal-sounds/index.html">
         <div class="game-tile__emoji">🐶</div>
-        <div class="game-tile__label">どうぶつ</div>
+        <div class="game-tile__label">なきごえ</div>
       </a>
       <a class="game-tile" style="--tile-color:var(--blue)" href="games/fireworks/index.html">
         <div class="game-tile__emoji">🎆</div>
@@ -112,6 +135,18 @@
       <a class="game-tile" style="--tile-color:var(--coral)" href="games/rain-ripples/index.html">
         <div class="game-tile__emoji">💧</div>
         <div class="game-tile__label">あめふり</div>
+      </a>
+      <a class="game-tile" style="--tile-color:var(--pink)" href="games/animal-quiz/index.html">
+        <img class="game-tile__char" src="icons/characters/kuma.png" alt="くまた">
+        <div class="game-tile__label">どうぶつクイズ</div>
+      </a>
+      <a class="game-tile" style="--tile-color:var(--purple)" href="games/memory-match/index.html">
+        <img class="game-tile__char" src="icons/characters/neko.png" alt="みけ">
+        <div class="game-tile__label">えあわせ</div>
+      </a>
+      <a class="game-tile" style="--tile-color:var(--orange)" href="games/counting/index.html">
+        <img class="game-tile__char" src="icons/characters/usagi.png" alt="ぴょん">
+        <div class="game-tile__label">かずあそび</div>
       </a>
     </div>
 

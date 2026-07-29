@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#fff1da">
+<title>どうぶつクイズ - あそびばこ</title>
+<link rel="manifest" href="../../manifest.json">
+<link rel="icon" href="../../icons/favicon-32.png" sizes="32x32">
+<link rel="stylesheet" href="../../shared/style.css">
+<style>
+  body { background: linear-gradient(160deg, #fff1da, #ffe3ef); overflow: hidden; }
+  .quiz-wrap {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: calc(var(--safe-top) + 70px) 16px calc(var(--safe-bottom) + 16px);
+  }
+  .mascot-row { margin-bottom: 22px; max-width: 92vw; }
+  .options {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(120px, 1fr));
+    gap: 4vmin;
+    width: 100%;
+    max-width: 520px;
+    flex: 1;
+  }
+  .option-card {
+    background: var(--white);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-soft);
+    border: 5px solid transparent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: min(15vw, 18vh);
+    transition: transform 0.1s ease-out;
+  }
+  .option-card:active { transform: scale(0.94); }
+  .option-card.correct { border-color: var(--green); animation: pop-correct 500ms ease-out; }
+  @keyframes pop-correct {
+    0% { transform: scale(1); }
+    40% { transform: scale(1.15); }
+    100% { transform: scale(1); }
+  }
+</style>
+</head>
+<body>
+  <div class="quiz-wrap">
+    <div id="mascotHost"></div>
+    <div class="options" id="options"></div>
+  </div>
+  <script src="../../shared/app.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
