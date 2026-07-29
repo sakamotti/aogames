@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#fff8f0">
+<title>いろさがし - あそびばこ</title>
+<link rel="manifest" href="../../manifest.json">
+<link rel="icon" href="../../icons/favicon-32.png" sizes="32x32">
+<link rel="stylesheet" href="../../shared/style.css">
+<style>
+  body { background: linear-gradient(160deg, #fff8f0, #f0f6ff); }
+  .board { position: absolute; inset: 0; padding-top: 70px; }
+  .prompt {
+    position: absolute;
+    top: calc(var(--safe-top) + 12px);
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: rgba(255,255,255,0.9);
+    border-radius: 999px;
+    padding: 10px 22px;
+    box-shadow: var(--shadow-soft);
+    font-size: 18px;
+    z-index: 5;
+  }
+  .prompt__swatch {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    border: 3px solid #fff;
+    box-shadow: 0 0 0 2px rgba(0,0,0,0.08);
+  }
+  .blob {
+    position: absolute;
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    box-shadow: var(--shadow-soft);
+  }
+  .blob.wrong { animation: blob-wiggle 400ms ease; }
+  @keyframes blob-wiggle {
+    0%,100% { transform: translate(-50%,-50%) rotate(0deg); }
+    25% { transform: translate(-50%,-50%) rotate(-8deg); }
+    75% { transform: translate(-50%,-50%) rotate(8deg); }
+  }
+</style>
+</head>
+<body>
+  <div class="prompt" id="prompt">
+    <span class="prompt__swatch" id="promptSwatch"></span>
+    <span id="promptText">いろは どこかな？</span>
+  </div>
+  <div class="stage">
+    <div class="board" id="board"></div>
+  </div>
+  <script src="../../shared/app.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>

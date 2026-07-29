@@ -3,20 +3,36 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-<meta name="theme-color" content="#1b1240">
-<title>はなび - あそびばこ</title>
+<meta name="theme-color" content="#fffaf0">
+<title>おえかき - あそびばこ</title>
 <link rel="manifest" href="../../manifest.json">
 <link rel="icon" href="../../icons/favicon-32.png" sizes="32x32">
 <link rel="stylesheet" href="../../shared/style.css">
 <style>
-  body { background: radial-gradient(ellipse at 50% 100%, #2a1b5e 0%, #120a30 65%, #08051c 100%); }
+  body { background: #fffaf0; }
   .play-canvas { background: transparent; }
+  .clear-button {
+    position: absolute;
+    right: calc(var(--safe-right) + 14px);
+    bottom: calc(var(--safe-bottom) + 14px);
+    z-index: 1000;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.9);
+    box-shadow: var(--shadow-soft);
+    font-size: 26px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
 </style>
 </head>
 <body>
   <div class="stage">
     <canvas class="play-canvas" id="c"></canvas>
   </div>
+  <button class="clear-button tap-button" id="clearBtn" aria-label="けす">🧽</button>
   <script src="../../shared/app.js"></script>
   <script src="script.js"></script>
 </body>

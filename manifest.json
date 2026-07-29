@@ -1,21 +1,20 @@
 {
-  "name": "Kids Games",
-  "short_name": "KidsGames",
+  "id": "/",
+  "name": "あそびばこ - 3さいからのミニゲーム",
+  "short_name": "あそびばこ",
+  "description": "3〜4歳のこども向け、広告なし・通信なしで遊べるミニゲーム集。外出先でもオフラインで遊べます。",
+  "lang": "ja",
   "start_url": "./index.html",
+  "scope": "./",
   "display": "standalone",
-  "background_color": "#000000",
-  "theme_color": "#000000",
-  "orientation": "landscape",
+  "orientation": "any",
+  "background_color": "#fff6e9",
+  "theme_color": "#ffb84d",
+  "categories": ["kids", "education", "games"],
   "icons": [
-    {
-      "src": "icon-192.png",
-      "sizes": "192x192",
-      "type": "image/png"
-    },
-    {
-      "src": "icon-512.png",
-      "sizes": "512x512",
-      "type": "image/png"
-    }
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-maskable-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
+    { "src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
   ]
 }

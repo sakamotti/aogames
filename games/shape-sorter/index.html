@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#eafaf5">
+<title>かたちあわせ - あそびばこ</title>
+<link rel="manifest" href="../../manifest.json">
+<link rel="icon" href="../../icons/favicon-32.png" sizes="32x32">
+<link rel="stylesheet" href="../../shared/style.css">
+<style>
+  body { background: linear-gradient(160deg, #eafaf5, #eef3ff); }
+  .board {
+    position: absolute;
+    inset: 0;
+  }
+  .hole, .piece {
+    position: absolute;
+    transform: translate(-50%, -50%);
+  }
+  .hole { pointer-events: none; }
+  .piece {
+    touch-action: none;
+    filter: drop-shadow(0 6px 10px rgba(74,59,120,0.25));
+    transition: left 220ms ease, top 220ms ease;
+  }
+  .piece.dragging { transition: none; z-index: 20; }
+  .piece.placed { pointer-events: none; }
+</style>
+</head>
+<body>
+  <div class="stage">
+    <div class="board" id="board"></div>
+  </div>
+  <script src="../../shared/app.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
