@@ -96,6 +96,9 @@
     splash() { playNoise({ duration: 0.35, filterFreq: 900, gain: 0.16 }); },
     whoosh() { playNoise({ duration: 0.5, filterFreq: 2200, gain: 0.12 }); },
     click() { playTone({ freq: 700, duration: 0.06, type: 'square', gain: 0.06 }); },
+    purr() { playNoise({ duration: 0.22, filterFreq: 140, gain: 0.1 }); },
+    pant() { playTone({ freq: 380, glideTo: 460, duration: 0.14, type: 'triangle', gain: 0.1 }); },
+    munch() { playTone({ freq: 220, glideTo: 140, duration: 0.12, type: 'square', gain: 0.14 }); },
   };
 
   // ---------------------------------------------------------------------
