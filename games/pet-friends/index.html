@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#fff1e6">
+<title>なでなで どうぶつ - あそびばこ</title>
+<link rel="manifest" href="../../manifest.json">
+<link rel="icon" href="../../icons/favicon-32.png" sizes="32x32">
+<link rel="stylesheet" href="../../shared/style.css">
+<style>
+  body { background: linear-gradient(160deg, #fff1e6, #ffeef5); overflow: hidden; }
+
+  .pet-wrap-outer {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: calc(var(--safe-top) + 70px) 16px calc(var(--safe-bottom) + 20px);
+  }
+
+  .species-toggle {
+    display: flex;
+    gap: 14px;
+    margin-bottom: 10px;
+  }
+  .species-btn {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: var(--white);
+    box-shadow: var(--shadow-soft);
+    font-size: 26px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 4px solid transparent;
+  }
+  .species-btn.active { border-color: var(--pink); }
+
+  .affection-row {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 12px;
+    font-size: 22px;
+  }
+  .affection-row span { opacity: 0.25; transition: opacity 0.25s, transform 0.25s; }
+  .affection-row span.filled { opacity: 1; transform: scale(1.15); }
+
+  .pet-name {
+    font-size: clamp(16px, 4vw, 20px);
+    color: var(--ink-soft);
+    margin: 0 0 4px;
+  }
+
+  .pet-area {
+    position: relative;
+    flex: 1;
+    width: 100%;
+    max-width: 420px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 0;
+  }
+
+  .pet-wrap {
+    position: absolute;
+    inset: 0;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    touch-action: none;
+  }
+  .pet-wrap.active { display: flex; }
+
+  .pet-svg { width: min(78vw, 62vh); height: min(78vw, 62vh); }
+  .pet-svg .pet-eyes-happy,
+  .pet-svg .pet-mouth-eating,
+  .pet-svg .pet-tongue { opacity: 0; }
+  .pet-svg.petting .pet-eyes-open { opacity: 0; }
+  .pet-svg.petting .pet-eyes-happy { opacity: 1; }
+  .pet-svg.eating .pet-mouth-idle { opacity: 0; }
+  .pet-svg.eating .pet-mouth-eating { opacity: 1; }
+  .pet-svg.petting .pet-tongue,
+  .pet-svg.eating .pet-tongue { opacity: 1; }
+  .pet-svg .pet-eyes-open, .pet-svg .pet-mouth-idle { transition: opacity 0.15s; }
+  .pet-svg .pet-eyes-happy, .pet-svg .pet-mouth-eating, .pet-svg .pet-tongue { transition: opacity 0.15s; }
+
+  .pet-svg .pet-tail { transform-origin: 165px 178px; animation: tail-wag 1.6s ease-in-out infinite; }
+  .pet-svg.petting .pet-tail, .pet-svg.eating .pet-tail { animation-duration: 0.5s; }
+  @keyframes tail-wag {
+    0%, 100% { transform: rotate(-6deg); }
+    50% { transform: rotate(10deg); }
+  }
+  .pet-svg .pet-body { animation: breathe 2.4s ease-in-out infinite; transform-origin: 120px 210px; }
+  @keyframes breathe {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.02); }
+  }
+  .pet-svg.eating .pet-mouth-eating { animation: chomp 0.35s ease-in-out infinite; transform-origin: 120px 162px; }
+  @keyframes chomp {
+    0%, 100% { transform: scaleY(1); }
+    50% { transform: scaleY(0.4); }
+  }
+  .pet-svg.bounce { animation: pet-bounce 0.5s ease-in-out; }
+  @keyframes pet-bounce {
+    0%, 100% { transform: translateY(0); }
+    40% { transform: translateY(-14px); }
+  }
+
+  .treat-bowl {
+    margin-top: 10px;
+    width: 76px;
+    height: 76px;
+    border-radius: 50%;
+    background: var(--white);
+    box-shadow: var(--shadow-soft);
+    font-size: 34px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .treat-bowl:active { transform: scale(0.92); }
+
+  .treat-flying {
+    position: fixed;
+    pointer-events: none;
+    font-size: 30px;
+    z-index: 500;
+    transition: left 0.5s ease-in, top 0.5s ease-in, transform 0.5s ease-in;
+  }
+
+  .heart-particle {
+    position: fixed;
+    pointer-events: none;
+    font-size: 22px;
+    z-index: 400;
+    animation: heart-float 750ms ease-out forwards;
+  }
+  @keyframes heart-float {
+    0% { transform: translate(-50%, -50%) scale(0.6); opacity: 1; }
+    100% { transform: translate(calc(-50% + var(--hx, 0px)), calc(-50% - 70px)) scale(1.05); opacity: 0; }
+  }
+</style>
+</head>
+<body>
+  <div class="pet-wrap-outer">
+    <div class="species-toggle">
+      <button class="species-btn active" id="btnCat" aria-label="ねこ">🐱</button>
+      <button class="species-btn" id="btnDog" aria-label="いぬ">🐶</button>
+    </div>
+    <div class="affection-row" id="affectionRow"></div>
+    <p class="pet-name" id="petName">みけ</p>
+
+    <div class="pet-area">
+      <div class="pet-wrap active" id="wrapCat">
+        <svg class="pet-svg" id="svgCat" viewBox="0 0 240 240">
+          <g class="pet-tail"><path d="M165,178 C205,178 210,128 185,108" stroke="#E8A24C" stroke-width="16" stroke-linecap="round" fill="none"/></g>
+          <ellipse class="pet-body" cx="120" cy="205" rx="58" ry="42" fill="#F5B96A"/>
+          <ellipse cx="95" cy="235" rx="16" ry="10" fill="#F5B96A"/>
+          <ellipse cx="145" cy="235" rx="16" ry="10" fill="#F5B96A"/>
+          <polygon points="70,95 95,52 102,105" fill="#F5B96A"/>
+          <polygon points="170,95 145,52 138,105" fill="#F5B96A"/>
+          <polygon points="76,90 93,64 97,98" fill="#FFC2D6"/>
+          <polygon points="164,90 147,64 143,98" fill="#FFC2D6"/>
+          <circle class="pet-head" cx="120" cy="140" r="62" fill="#F5B96A"/>
+          <circle cx="75" cy="160" r="12" fill="#FF9FC0" opacity="0.7"/>
+          <circle cx="165" cy="160" r="12" fill="#FF9FC0" opacity="0.7"/>
+          <g stroke="#D8CFC2" stroke-width="2.5" stroke-linecap="round">
+            <line x1="62" y1="150" x2="20" y2="144"/>
+            <line x1="62" y1="160" x2="18" y2="160"/>
+            <line x1="62" y1="170" x2="20" y2="177"/>
+            <line x1="178" y1="150" x2="220" y2="144"/>
+            <line x1="178" y1="160" x2="222" y2="160"/>
+            <line x1="178" y1="170" x2="220" y2="177"/>
+          </g>
+          <g class="pet-eyes-open">
+            <circle cx="98" cy="135" r="10" fill="#4A3B78"/>
+            <circle cx="142" cy="135" r="10" fill="#4A3B78"/>
+            <circle cx="101" cy="131" r="3.5" fill="#fff"/>
+            <circle cx="145" cy="131" r="3.5" fill="#fff"/>
+          </g>
+          <g class="pet-eyes-happy">
+            <path d="M87,138 Q98,122 109,138" stroke="#4A3B78" stroke-width="5.5" fill="none" stroke-linecap="round"/>
+            <path d="M131,138 Q142,122 153,138" stroke="#4A3B78" stroke-width="5.5" fill="none" stroke-linecap="round"/>
+          </g>
+          <polygon points="114,148 126,148 120,156" fill="#FF9FC0"/>
+          <path class="pet-mouth-idle" d="M120,156 Q120,166 106,163 M120,156 Q120,166 134,163" stroke="#B4622F" stroke-width="4" fill="none" stroke-linecap="round"/>
+          <ellipse class="pet-mouth-eating" cx="120" cy="163" rx="13" ry="9" fill="#B4622F"/>
+        </svg>
+      </div>
+      <div class="pet-wrap" id="wrapDog">
+        <svg class="pet-svg" id="svgDog" viewBox="0 0 240 240">
+          <g class="pet-tail"><path d="M172,190 C218,194 224,156 208,140" stroke="#C99356" stroke-width="18" stroke-linecap="round" fill="none"/></g>
+          <ellipse class="pet-body" cx="120" cy="208" rx="60" ry="40" fill="#EFC28C"/>
+          <ellipse cx="95" cy="235" rx="16" ry="10" fill="#EFC28C"/>
+          <ellipse cx="145" cy="235" rx="16" ry="10" fill="#EFC28C"/>
+          <ellipse cx="66" cy="132" rx="18" ry="36" fill="#C99356" transform="rotate(-16 66 132)"/>
+          <ellipse cx="174" cy="132" rx="18" ry="36" fill="#C99356" transform="rotate(16 174 132)"/>
+          <circle class="pet-head" cx="120" cy="140" r="60" fill="#EFC28C"/>
+          <circle cx="80" cy="158" r="11" fill="#FF9FC0" opacity="0.6"/>
+          <circle cx="160" cy="158" r="11" fill="#FF9FC0" opacity="0.6"/>
+          <ellipse cx="120" cy="168" rx="32" ry="22" fill="#FBEBD8"/>
+          <ellipse cx="120" cy="151" rx="10" ry="7" fill="#5B3A29"/>
+          <g class="pet-eyes-open">
+            <circle cx="95" cy="128" r="10" fill="#4A3B78"/>
+            <circle cx="145" cy="128" r="10" fill="#4A3B78"/>
+            <circle cx="98" cy="124" r="3.5" fill="#fff"/>
+            <circle cx="148" cy="124" r="3.5" fill="#fff"/>
+          </g>
+          <g class="pet-eyes-happy">
+            <path d="M84,131 Q95,115 106,131" stroke="#4A3B78" stroke-width="5.5" fill="none" stroke-linecap="round"/>
+            <path d="M134,131 Q145,115 156,131" stroke="#4A3B78" stroke-width="5.5" fill="none" stroke-linecap="round"/>
+          </g>
+          <path class="pet-mouth-idle" d="M120,178 Q120,186 108,183 M120,178 Q120,186 132,183" stroke="#8A5A32" stroke-width="4" fill="none" stroke-linecap="round"/>
+          <ellipse class="pet-mouth-eating" cx="120" cy="180" rx="13" ry="9" fill="#8A5A32"/>
+          <path class="pet-tongue" d="M112,180 Q120,206 128,180 Z" fill="#FF8FA8"/>
+        </svg>
+      </div>
+    </div>
+
+    <button class="treat-bowl" id="treatBowl" aria-label="ごはん">🐟</button>
+  </div>
+
+  <script src="../../shared/app.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
