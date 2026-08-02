@@ -10,7 +10,13 @@
 <link rel="stylesheet" href="../../shared/style.css">
 <style>
   body { background: linear-gradient(160deg, #fff8f0, #f0f6ff); }
-  .board { position: absolute; inset: 0; padding-top: 70px; }
+  .board {
+    position: absolute;
+    top: calc(var(--safe-top) + 78px);
+    left: var(--safe-left);
+    right: var(--safe-right);
+    bottom: calc(var(--safe-bottom) + var(--safe-bottom-gap));
+  }
   .prompt {
     position: absolute;
     top: calc(var(--safe-top) + 12px);
