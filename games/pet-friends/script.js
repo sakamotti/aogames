@@ -2,10 +2,15 @@
   KidsApp.initCommon();
 
   const SPECIES = {
-    cat: { wrap: 'wrapCat', svg: 'svgCat', name: 'みけ', treat: '🐟', talk: 'にゃー', purr: () => KidsApp.Sound.purr() },
-    dog: { wrap: 'wrapDog', svg: 'svgDog', name: 'ポチ', treat: '🍖', talk: 'わん！', purr: () => KidsApp.Sound.pant() },
+    cat: {
+      wrap: 'wrapCat', svg: 'svgCat', actor: 'actorCat', food: 'foodCat',
+      name: 'みけ', treat: '🐟', talk: 'にゃー', purr: () => KidsApp.Sound.purr(),
+    },
+    dog: {
+      wrap: 'wrapDog', svg: 'svgDog', actor: 'actorDog', food: 'foodDog',
+      name: 'ポチ', treat: '🍖', talk: 'わん！', purr: () => KidsApp.Sound.pant(),
+    },
   };
-  const MOUTH_Y = { cat: 160, dog: 175 };
 
   const els = {
     btnCat: document.getElementById('btnCat'),
@@ -15,8 +20,6 @@
     treatBowl: document.getElementById('treatBowl'),
     wrapCat: document.getElementById('wrapCat'),
     wrapDog: document.getElementById('wrapDog'),
-    svgCat: document.getElementById('svgCat'),
-    svgDog: document.getElementById('svgDog'),
   };
 
   let species = 'cat';
@@ -27,6 +30,7 @@
   let lastHeartAt = 0;
   let lastPurrAt = 0;
   let idleTimer = null;
+  let feeding = false;
 
   for (let i = 0; i < 5; i++) {
     const span = document.createElement('span');
@@ -39,6 +43,12 @@
   }
   function currentSvg() {
     return document.getElementById(SPECIES[species].svg);
+  }
+  function currentActor() {
+    return document.getElementById(SPECIES[species].actor);
+  }
+  function currentFood() {
+    return document.getElementById(SPECIES[species].food);
   }
 
   function renderAffection() {
@@ -74,7 +84,7 @@
   }
 
   function startPetting() {
-    if (petting) return;
+    if (petting || feeding) return;
     petting = true;
     petSessionStart = performance.now();
     petAwarded = false;
@@ -119,46 +129,59 @@
   attachPetting(els.wrapCat);
   attachPetting(els.wrapDog);
 
-  function feed() {
-    if (petting) stopPetting();
-    const bowlRect = els.treatBowl.getBoundingClientRect();
-    const svgRect = currentSvg().getBoundingClientRect();
-    const mouthFrac = MOUTH_Y[species] / 240;
-    const targetX = svgRect.left + svgRect.width / 2;
-    const targetY = svgRect.top + svgRect.height * mouthFrac;
+  // Feeding is a little story: a bowl of food appears on the ground to one
+  // side, the pet notices, waddles over to it, eats, then wanders back.
+  const WALK_PX = 92;
+  const WALK_MS = 800;
 
-    const treat = document.createElement('div');
-    treat.className = 'treat-flying';
-    treat.textContent = SPECIES[species].treat;
-    treat.style.left = bowlRect.left + bowlRect.width / 2 + 'px';
-    treat.style.top = bowlRect.top + bowlRect.height / 2 + 'px';
-    treat.style.transform = 'translate(-50%, -50%) scale(1)';
-    document.body.appendChild(treat);
+  function feed() {
+    if (feeding) return;
+    if (petting) stopPetting();
+    feeding = true;
+    els.treatBowl.disabled = true;
+
+    const svg = currentSvg();
+    const actor = currentActor();
+    const food = currentFood();
+    const side = Math.random() < 0.5 ? -1 : 1;
+    const offset = side * WALK_PX;
+
+    food.style.left = `calc(50% + ${offset}px)`;
+    food.classList.remove('eaten');
+    // force reflow so the pop-in transition replays even if reused quickly
+    void food.offsetWidth;
+    food.classList.add('shown');
     KidsApp.Sound.tap();
 
-    requestAnimationFrame(() => {
-      treat.style.left = targetX + 'px';
-      treat.style.top = targetY + 'px';
-      treat.style.transform = 'translate(-50%, -50%) scale(0.4)';
-    });
+    svg.classList.add('walking');
+    actor.style.transform = `translateX(${offset}px)`;
 
     setTimeout(() => {
-      treat.remove();
-      const svg = currentSvg();
+      svg.classList.remove('walking');
       svg.classList.add('eating');
       KidsApp.Sound.munch();
       setTimeout(() => KidsApp.Sound.munch(), 220);
-      spawnHeart(targetX, targetY - 20);
+      food.classList.add('eaten');
+      const rect = food.getBoundingClientRect();
+      spawnHeart(rect.left + rect.width / 2, rect.top);
+
       setTimeout(() => {
         svg.classList.remove('eating');
         awardAffection();
-      }, 650);
-    }, 520);
+        svg.classList.add('walking');
+        actor.style.transform = 'translateX(0)';
+        setTimeout(() => {
+          svg.classList.remove('walking');
+          feeding = false;
+          els.treatBowl.disabled = false;
+        }, WALK_MS);
+      }, 700);
+    }, WALK_MS);
   }
   els.treatBowl.addEventListener('pointerdown', feed);
 
   function setSpecies(next) {
-    if (species === next) return;
+    if (species === next || feeding) return;
     stopPetting();
     species = next;
     els.wrapCat.classList.toggle('active', next === 'cat');
@@ -175,7 +198,7 @@
   function scheduleIdle() {
     clearTimeout(idleTimer);
     idleTimer = setTimeout(() => {
-      if (!petting) {
+      if (!petting && !feeding) {
         const svg = currentSvg();
         svg.classList.add('bounce');
         KidsApp.speak(SPECIES[species].talk);
