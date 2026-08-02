@@ -292,6 +292,20 @@
     global.addEventListener('load', () => {
       navigator.serviceWorker.register(BASE + 'sw.js').catch(() => {});
     });
+    // Auto-refresh once a newer cached version takes over, so an update we
+    // ship doesn't silently sit uninstalled on a device that already has
+    // the app open/cached. Skip the very first activation (a brand-new
+    // visitor has nothing to refresh yet) - only reload when a controller
+    // that was already active gets replaced by a newer one.
+    let hadController = !!navigator.serviceWorker.controller;
+    let reloaded = false;
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (hadController && !reloaded) {
+        reloaded = true;
+        global.location.reload();
+      }
+      hadController = true;
+    });
   }
 
   function rand(min, max) { return Math.random() * (max - min) + min; }
