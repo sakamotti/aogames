@@ -15,6 +15,15 @@
     );
   const BASE = thisScript ? thisScript.src.replace(/shared\/app\.js.*$/, '') : './';
 
+  // On touchscreen Chrome (notably ChromeOS tablets, which treat a long
+  // press as a right-click), a long hold fires a native `contextmenu` event
+  // independently of any pointerdown/touchstart preventDefault() - it has
+  // to be stopped separately, or every long-press interaction (the hold-to-
+  // exit home button, dragging in shape-sorter, sustained petting, ...)
+  // pops the browser's menu open instead. There is nothing in this app
+  // that ever needs a context menu, so block it everywhere, always.
+  document.addEventListener('contextmenu', (e) => e.preventDefault());
+
   // ---------------------------------------------------------------------
   // Sound: everything is synthesized with WebAudio so there are zero audio
   // asset files to buy, license, or download.
