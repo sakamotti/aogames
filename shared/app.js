@@ -183,6 +183,24 @@
   }
 
   // ---------------------------------------------------------------------
+  // Back-navigation trap: the whole point of the hold-to-exit home button
+  // is that leaving a game is a deliberate, grown-up-speed action - but a
+  // stray edge-swipe (Chrome's back gesture) or a hardware/software back
+  // button bypasses it entirely via browser history, instantly bouncing
+  // back to the launcher mid-play. touch-action:none on body discourages
+  // the swipe gesture from engaging in the first place, but that alone
+  // isn't watertight across every browser/device, so this is the backup:
+  // push a dummy history entry and immediately re-push it on every
+  // `popstate`, so a back-navigation never actually leaves the page.
+  // ---------------------------------------------------------------------
+  function trapBackNavigation() {
+    history.pushState({ kidsAppTrap: true }, '', location.href);
+    global.addEventListener('popstate', () => {
+      history.pushState({ kidsAppTrap: true }, '', location.href);
+    });
+  }
+
+  // ---------------------------------------------------------------------
   // Home button: requires a short *hold* so a toddler mashing the screen
   // can't accidentally back out of a game mid-play.
   // ---------------------------------------------------------------------
@@ -354,7 +372,10 @@
       },
       { once: true, passive: true }
     );
-    if (opts.home !== false) initHomeButton();
+    if (opts.home !== false) {
+      initHomeButton();
+      trapBackNavigation();
+    }
     initMuteButton();
     registerServiceWorker();
   }
