@@ -2,15 +2,15 @@
   KidsApp.initCommon();
 
   const ANIMALS = [
-    { emoji: '🐶', sound: 'わんわん！', color: 'var(--orange)' },
-    { emoji: '🐱', sound: 'にゃーん！', color: 'var(--pink)' },
-    { emoji: '🐮', sound: 'もーう！', color: 'var(--purple)' },
-    { emoji: '🐸', sound: 'げこげこ！', color: 'var(--green)' },
-    { emoji: '🐷', sound: 'ぶーぶー！', color: 'var(--coral)' },
-    { emoji: '🐔', sound: 'こけこっこー！', color: 'var(--yellow)' },
-    { emoji: '🦁', sound: 'がおー！', color: 'var(--blue)' },
-    { emoji: '🐘', sound: 'ぱおーん！', color: 'var(--teal)' },
-    { emoji: '🐑', sound: 'めーめー！', color: 'var(--pink)' },
+    { emoji: '🐶', sound: 'わんわん！', sfx: 'dog', color: 'var(--orange)' },
+    { emoji: '🐱', sound: 'にゃーん！', sfx: 'cat', color: 'var(--pink)' },
+    { emoji: '🐮', sound: 'もーう！', sfx: 'cow', color: 'var(--purple)' },
+    { emoji: '🐸', sound: 'げこげこ！', sfx: 'frog', color: 'var(--green)' },
+    { emoji: '🐷', sound: 'ぶーぶー！', sfx: 'pig', color: 'var(--coral)' },
+    { emoji: '🐔', sound: 'こけこっこー！', sfx: 'chicken', color: 'var(--yellow)' },
+    { emoji: '🦁', sound: 'がおー！', sfx: 'lion', color: 'var(--blue)' },
+    { emoji: '🐘', sound: 'ぱおーん！', sfx: 'elephant', color: 'var(--teal)' },
+    { emoji: '🐑', sound: 'めーめー！', sfx: 'sheep', color: 'var(--pink)' },
   ];
 
   const grid = document.getElementById('grid');
@@ -26,8 +26,7 @@
       // restart animation
       void card.offsetWidth;
       card.classList.add('bounce');
-      KidsApp.Sound.boing();
-      KidsApp.speak(a.sound);
+      KidsApp.AnimalSounds[a.sfx]();
       const rect = card.getBoundingClientRect();
       KidsApp.confettiBurst(document.body, rect.left + rect.width / 2, rect.top + rect.height / 2, 10);
     });

@@ -4,11 +4,11 @@
   const SPECIES = {
     cat: {
       wrap: 'wrapCat', svg: 'svgCat', actor: 'actorCat', food: 'foodCat',
-      name: 'みけ', treat: '🐟', talk: 'にゃー', purr: () => KidsApp.Sound.purr(),
+      name: 'みけ', treat: '🐟', sfx: 'cat', purr: () => KidsApp.Sound.purr(),
     },
     dog: {
       wrap: 'wrapDog', svg: 'svgDog', actor: 'actorDog', food: 'foodDog',
-      name: 'ポチ', treat: '🍖', talk: 'わん！', purr: () => KidsApp.Sound.pant(),
+      name: 'ポチ', treat: '🍖', sfx: 'dog', purr: () => KidsApp.Sound.pant(),
     },
   };
 
@@ -201,7 +201,7 @@
       if (!petting && !feeding) {
         const svg = currentSvg();
         svg.classList.add('bounce');
-        KidsApp.speak(SPECIES[species].talk);
+        KidsApp.AnimalSounds[SPECIES[species].sfx]();
         setTimeout(() => svg.classList.remove('bounce'), 550);
       }
       scheduleIdle();

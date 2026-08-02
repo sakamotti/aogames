@@ -86,6 +86,83 @@
     src.start(t0);
   }
 
+  // A pitch-contour tone (with optional vibrato) for shaping something more
+  // expressive than a single steady note - the building block for the
+  // synthesized animal cries below.
+  function playEnvelope(points, { type = 'sine', gain = 0.2, vibratoRate = 0, vibratoDepth = 0, delay = 0 } = {}) {
+    if (isMuted()) return;
+    const audio = getCtx();
+    if (!audio) return;
+    const t0 = audio.currentTime + delay;
+    const totalDur = points[points.length - 1].t;
+    const osc = audio.createOscillator();
+    osc.type = type;
+    osc.frequency.setValueAtTime(points[0].f, t0);
+    for (let i = 1; i < points.length; i++) {
+      osc.frequency.linearRampToValueAtTime(points[i].f, t0 + points[i].t);
+    }
+    if (vibratoRate > 0) {
+      const vibOsc = audio.createOscillator();
+      const vibGain = audio.createGain();
+      vibOsc.frequency.value = vibratoRate;
+      vibGain.gain.value = vibratoDepth;
+      vibOsc.connect(vibGain).connect(osc.frequency);
+      vibOsc.start(t0);
+      vibOsc.stop(t0 + totalDur + 0.05);
+    }
+    const g = audio.createGain();
+    g.gain.setValueAtTime(0, t0);
+    g.gain.linearRampToValueAtTime(gain, t0 + Math.min(0.03, totalDur / 4));
+    g.gain.setValueAtTime(gain, t0 + Math.max(0, totalDur - 0.08));
+    g.gain.linearRampToValueAtTime(0.0001, t0 + totalDur);
+    osc.connect(g).connect(audio.destination);
+    osc.start(t0);
+    osc.stop(t0 + totalDur + 0.05);
+  }
+
+  // Synthesized animal cries (WebAudio pitch contours, not TTS reading the
+  // onomatopoeia text out loud) - a real bark/meow-shaped sound reads as far
+  // less "robotic" than a speech synthesizer pronouncing "わんわん".
+  const AnimalSounds = {
+    dog() {
+      [0, 190].forEach((delay) =>
+        playEnvelope([{ f: 380, t: 0 }, { f: 440, t: 0.05 }, { f: 220, t: 0.13 }], { type: 'sawtooth', gain: 0.22, delay: delay / 1000 })
+      );
+    },
+    cat() {
+      playEnvelope([{ f: 420, t: 0 }, { f: 680, t: 0.16 }, { f: 380, t: 0.5 }], { type: 'sine', gain: 0.2, vibratoRate: 7, vibratoDepth: 14 });
+    },
+    cow() {
+      playEnvelope([{ f: 160, t: 0 }, { f: 140, t: 0.5 }, { f: 90, t: 0.85 }], { type: 'sawtooth', gain: 0.22, vibratoRate: 5, vibratoDepth: 6 });
+    },
+    frog() {
+      [0, 240].forEach((delay) =>
+        playEnvelope([{ f: 220, t: 0 }, { f: 130, t: 0.06 }, { f: 180, t: 0.1 }], { type: 'square', gain: 0.15, delay: delay / 1000 })
+      );
+    },
+    pig() {
+      [0, 180].forEach((delay) =>
+        playEnvelope([{ f: 260, t: 0 }, { f: 330, t: 0.05 }, { f: 170, t: 0.14 }], { type: 'sawtooth', gain: 0.2, delay: delay / 1000 })
+      );
+    },
+    chicken() {
+      [523, 587, 659, 523, 392].forEach((f, i) => playTone({ freq: f, duration: 0.14, type: 'triangle', gain: 0.16, delay: i * 0.11 }));
+    },
+    lion() {
+      playEnvelope([{ f: 110, t: 0 }, { f: 150, t: 0.15 }, { f: 85, t: 0.7 }], { type: 'sawtooth', gain: 0.22 });
+      playNoise({ duration: 0.7, filterFreq: 250, gain: 0.09 });
+    },
+    elephant() {
+      playEnvelope(
+        [{ f: 300, t: 0 }, { f: 720, t: 0.15 }, { f: 500, t: 0.4 }, { f: 620, t: 0.55 }, { f: 430, t: 0.78 }],
+        { type: 'sawtooth', gain: 0.2 }
+      );
+    },
+    sheep() {
+      playEnvelope([{ f: 320, t: 0 }, { f: 380, t: 0.25 }, { f: 300, t: 0.5 }], { type: 'sawtooth', gain: 0.2, vibratoRate: 9, vibratoDepth: 18 });
+    },
+  };
+
   const notes = { C: 261.63, D: 293.66, E: 329.63, F: 349.23, G: 392.0, A: 440.0, B: 493.88, C2: 523.25, D2: 587.33, E2: 659.25 };
 
   const Sound = {
@@ -117,8 +194,12 @@
   let jaVoice = null;
   function pickVoice() {
     if (!global.speechSynthesis) return;
-    const voices = global.speechSynthesis.getVoices();
-    jaVoice = voices.find((v) => v.lang && v.lang.startsWith('ja')) || null;
+    const jaVoices = global.speechSynthesis.getVoices().filter((v) => v.lang && v.lang.startsWith('ja'));
+    // Where more than one Japanese voice is available, prefer a named
+    // network/premium voice (e.g. Chrome's "Google 日本語") over a generic
+    // compact/local one - it tends to sound noticeably less robotic.
+    const preferred = jaVoices.find((v) => /google|natural|neural|premium|enhanced/i.test(v.name));
+    jaVoice = preferred || jaVoices[0] || null;
   }
   if (global.speechSynthesis) {
     pickVoice();
@@ -398,5 +479,6 @@
     CHARACTERS,
     mascotBubble,
     BOTTOM_GAP: BOTTOM_GAP_PX,
+    AnimalSounds,
   };
 })(window);
