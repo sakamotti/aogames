@@ -71,7 +71,7 @@
           KidsApp.confettiBurst(document.body, w * 0.3, h * 0.35, 16);
           KidsApp.confettiBurst(document.body, w * 0.7, h * 0.35, 16);
         }, 150);
-        setTimeout(build, 2000);
+        setTimeout(build, 2500);
       }
     } else {
       const second = card;

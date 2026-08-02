@@ -184,7 +184,7 @@
         KidsApp.confettiBurst(document.body, w * 0.25, h * 0.4, 16);
         KidsApp.confettiBurst(document.body, w * 0.75, h * 0.4, 16);
       }, 150);
-      setTimeout(build, 1900);
+      setTimeout(build, 2400);
     }
   }
 

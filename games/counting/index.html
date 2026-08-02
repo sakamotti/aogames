@@ -16,7 +16,7 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding: calc(var(--safe-top) + 70px) 16px calc(var(--safe-bottom) + 16px);
+    padding: calc(var(--safe-top) + 70px) 16px calc(var(--safe-bottom) + var(--safe-bottom-gap));
   }
   .mascot-row { margin-bottom: 12px; max-width: 92vw; }
   .counting-area {
@@ -53,12 +53,6 @@
     color: var(--ink);
   }
   .number-card:active { transform: scale(0.94); }
-  .number-card.correct { border-color: var(--green); animation: pop-correct 500ms ease-out; }
-  @keyframes pop-correct {
-    0% { transform: scale(1); }
-    40% { transform: scale(1.15); }
-    100% { transform: scale(1); }
-  }
 </style>
 </head>
 <body>

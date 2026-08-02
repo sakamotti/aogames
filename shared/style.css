@@ -32,6 +32,11 @@
   --safe-bottom: env(safe-area-inset-bottom, 0px);
   --safe-left: env(safe-area-inset-left, 0px);
   --safe-right: env(safe-area-inset-right, 0px);
+  /* Extra dead zone above the physical bottom edge, on top of the OS safe
+     area. Android's gesture bar often reports 0 for safe-area-inset-bottom,
+     so without this, buttons/tap targets near the bottom edge get eaten by
+     the system back/home gesture instead of the game. */
+  --safe-bottom-gap: 56px;
 }
 
 * {
@@ -91,7 +96,9 @@ button {
   overflow: hidden;
 }
 
-/* Full-screen tap/draw canvas used by most sensory games */
+/* Full-screen tap/draw canvas used by most sensory games.
+   Actual position/size is set from JS (KidsApp.setupCanvas) so it can be
+   inset by the safe area + bottom gap - this is just a pre-JS fallback. */
 .play-canvas {
   position: absolute;
   inset: 0;
@@ -230,6 +237,67 @@ button {
   border-width: 8px 10px 8px 0;
   border-style: solid;
   border-color: transparent var(--white) transparent transparent;
+}
+
+/* ---------- Big, unmistakable "correct!" feedback for quiz-style choices ----------
+   A colored border alone is too subtle for a 4-6yo to register at a glance.
+   The whole button fills with color, a ring glows outward, a checkmark
+   badge pops in, and the other choices dim so the right one is obvious. */
+.choice-correct {
+  position: relative;
+  background: linear-gradient(160deg, #7be7b8, var(--green)) !important;
+  color: #fff !important;
+  box-shadow: 0 0 0 5px rgba(6, 214, 160, 0.45), var(--shadow-soft) !important;
+  animation: choice-correct-pop 550ms ease-out;
+  z-index: 2;
+}
+.choice-correct::before {
+  content: '';
+  position: absolute;
+  inset: -10px;
+  border-radius: inherit;
+  border: 5px solid var(--green);
+  opacity: 0.85;
+  animation: choice-correct-ring 700ms ease-out;
+  pointer-events: none;
+}
+.choice-correct::after {
+  content: '✓';
+  position: absolute;
+  top: -16px;
+  right: -16px;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: var(--green);
+  color: #fff;
+  font-size: 24px;
+  line-height: 42px;
+  text-align: center;
+  box-shadow: var(--shadow-soft);
+  animation: choice-badge-pop 450ms ease-out 150ms backwards;
+  pointer-events: none;
+}
+@keyframes choice-correct-pop {
+  0% { transform: scale(1); }
+  35% { transform: scale(1.2); }
+  60% { transform: scale(0.96); }
+  100% { transform: scale(1.06); }
+}
+@keyframes choice-correct-ring {
+  0% { transform: scale(0.9); opacity: 0.9; }
+  100% { transform: scale(1.35); opacity: 0; }
+}
+@keyframes choice-badge-pop {
+  0% { transform: scale(0); opacity: 0; }
+  65% { transform: scale(1.25); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.choice-dim {
+  opacity: 0.35;
+  filter: saturate(0.5);
+  transition: opacity 0.3s ease, filter 0.3s ease;
 }
 
 /* Generic gentle "try again" shake for quiz-style wrong answers */

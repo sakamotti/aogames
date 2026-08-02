@@ -79,13 +79,16 @@
     if (locked) return;
     if (n === target) {
       locked = true;
-      card.classList.add('correct');
+      card.classList.add('choice-correct');
+      [...optionsEl.children].forEach((c) => {
+        if (c !== card) c.classList.add('choice-dim');
+      });
       KidsApp.Sound.success();
       const rect = card.getBoundingClientRect();
       KidsApp.confettiBurst(document.body, rect.left + rect.width / 2, rect.top + rect.height / 2, 16);
       mascot.setText(`せいかい！ ${target}こ だったね！`);
       KidsApp.speak(`せいかい！ ${target}こ だったね！`);
-      setTimeout(askQuestion, 1700);
+      setTimeout(askQuestion, 2500);
     } else {
       card.classList.remove('shake-x');
       void card.offsetWidth;

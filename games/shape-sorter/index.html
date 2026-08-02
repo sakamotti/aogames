@@ -12,7 +12,10 @@
   body { background: linear-gradient(160deg, #eafaf5, #eef3ff); }
   .board {
     position: absolute;
-    inset: 0;
+    top: var(--safe-top);
+    left: var(--safe-left);
+    right: var(--safe-right);
+    bottom: calc(var(--safe-bottom) + var(--safe-bottom-gap));
   }
   .hole, .piece {
     position: absolute;

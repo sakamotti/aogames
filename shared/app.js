@@ -244,15 +244,38 @@
   // ---------------------------------------------------------------------
   // Canvas helper: device-pixel-ratio aware, resize-safe
   // ---------------------------------------------------------------------
+  // Extra dead zone kept clear above the physical bottom edge, on top of
+  // whatever the OS safe-area-inset-bottom reports (which is often 0 for
+  // Android's gesture bar). Tap targets living here get eaten by the
+  // system back/home gesture instead of the game - keep it clear.
+  const BOTTOM_GAP_PX = 56;
+
   function setupCanvas(canvas) {
     const dpr = Math.min(global.devicePixelRatio || 1, 2);
     const ctx2d = canvas.getContext('2d');
     function resize() {
-      const rect = canvas.parentElement.getBoundingClientRect();
-      canvas.width = Math.round(rect.width * dpr);
-      canvas.height = Math.round(rect.height * dpr);
-      canvas.style.width = rect.width + 'px';
-      canvas.style.height = rect.height + 'px';
+      // canvas.parentElement is always the .stage div, which carries the
+      // safe-area padding as real (already-env()-resolved) computed values -
+      // reading it here rather than trusting inset:0 on the canvas itself,
+      // since an absolutely positioned element's inset:0 is relative to the
+      // parent's padding edge and so ignores the parent's own padding.
+      const stage = canvas.parentElement;
+      const stageRect = stage.getBoundingClientRect();
+      const cs = global.getComputedStyle(stage);
+      const padTop = parseFloat(cs.paddingTop) || 0;
+      const padLeft = parseFloat(cs.paddingLeft) || 0;
+      const padRight = parseFloat(cs.paddingRight) || 0;
+      const padBottom = parseFloat(cs.paddingBottom) || 0;
+      const width = Math.max(50, stageRect.width - padLeft - padRight);
+      const height = Math.max(50, stageRect.height - padTop - padBottom - BOTTOM_GAP_PX);
+
+      canvas.style.position = 'absolute';
+      canvas.style.left = padLeft + 'px';
+      canvas.style.top = padTop + 'px';
+      canvas.style.width = width + 'px';
+      canvas.style.height = height + 'px';
+      canvas.width = Math.round(width * dpr);
+      canvas.height = Math.round(height * dpr);
       ctx2d.setTransform(dpr, 0, 0, dpr, 0, 0);
     }
     resize();
@@ -330,5 +353,6 @@
     choice,
     CHARACTERS,
     mascotBubble,
+    BOTTOM_GAP: BOTTOM_GAP_PX,
   };
 })(window);

@@ -72,11 +72,15 @@
     if (locked) return;
     if (blob.color === target) {
       locked = true;
+      blob.el.classList.add('choice-correct');
+      blobs.forEach((b) => {
+        if (b !== blob) b.el.classList.add('choice-dim');
+      });
       KidsApp.Sound.chime();
       const rect = blob.el.getBoundingClientRect();
       KidsApp.confettiBurst(document.body, rect.left + rect.width / 2, rect.top + rect.height / 2, 16);
       KidsApp.speak('せいかい！');
-      setTimeout(layout, 1300);
+      setTimeout(layout, 2300);
     } else {
       blob.el.classList.remove('wrong');
       void blob.el.offsetWidth;
