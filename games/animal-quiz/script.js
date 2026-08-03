@@ -2,15 +2,15 @@
   KidsApp.initCommon();
 
   const ANIMALS = [
-    { emoji: '🐶', name: 'いぬ', sound: 'わんわん' },
-    { emoji: '🐱', name: 'ねこ', sound: 'にゃーん' },
-    { emoji: '🐮', name: 'うし', sound: 'もーう' },
-    { emoji: '🐸', name: 'かえる', sound: 'げこげこ' },
-    { emoji: '🐷', name: 'ぶた', sound: 'ぶーぶー' },
-    { emoji: '🐔', name: 'にわとり', sound: 'こけこっこー' },
-    { emoji: '🦁', name: 'らいおん', sound: 'がおー' },
-    { emoji: '🐘', name: 'ぞう', sound: 'ぱおーん' },
-    { emoji: '🐑', name: 'ひつじ', sound: 'めーめー' },
+    { emoji: '🐶', name: 'いぬ', sound: 'わんわん', sfx: 'dog' },
+    { emoji: '🐱', name: 'ねこ', sound: 'にゃーん', sfx: 'cat' },
+    { emoji: '🐮', name: 'うし', sound: 'もーう', sfx: 'cow' },
+    { emoji: '🐸', name: 'かえる', sound: 'げこげこ', sfx: 'frog' },
+    { emoji: '🐷', name: 'ぶた', sound: 'ぶーぶー', sfx: 'pig' },
+    { emoji: '🐔', name: 'にわとり', sound: 'こけこっこー', sfx: 'chicken' },
+    { emoji: '🦁', name: 'らいおん', sound: 'がおー', sfx: 'lion' },
+    { emoji: '🐘', name: 'ぞう', sound: 'ぱおーん', sfx: 'elephant' },
+    { emoji: '🐑', name: 'ひつじ', sound: 'めーめー', sfx: 'sheep' },
   ];
 
   const host = KidsApp.choice(KidsApp.CHARACTERS);
@@ -48,7 +48,10 @@
 
     const prompt = `「${target.sound}」って なくのは だれかな？`;
     mascot.setText(prompt);
-    setTimeout(() => KidsApp.speak(target.sound + '。 だれの こえかな？'), 300);
+    setTimeout(() => {
+      KidsApp.AnimalSounds[target.sfx]();
+      setTimeout(() => KidsApp.speak('だれの こえかな？'), 500);
+    }, 300);
   }
 
   function onPick(animal, card) {
@@ -71,6 +74,7 @@
       card.classList.add('shake-x');
       KidsApp.Sound.tap();
       mascot.setText(`「${target.sound}」は どれかな？`);
+      KidsApp.AnimalSounds[target.sfx]();
     }
   }
 
