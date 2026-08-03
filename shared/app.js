@@ -86,82 +86,306 @@
     src.start(t0);
   }
 
-  // A pitch-contour tone (with optional vibrato) for shaping something more
-  // expressive than a single steady note - the building block for the
-  // synthesized animal cries below.
-  function playEnvelope(points, { type = 'sine', gain = 0.2, vibratoRate = 0, vibratoDepth = 0, delay = 0 } = {}) {
+  // A richer "creature vocalization" synth: unison-detuned oscillators for
+  // buzzy thickness, run through a filter whose cutoff can sweep over time
+  // (a crude formant/"mouth opening" effect), optionally blended with
+  // filtered noise for breath/rasp texture, optional pitch vibrato, and a
+  // small random pitch jitter each call so repeated taps don't sound like
+  // an identical looping robot. Still WebAudio synthesis, not a recording -
+  // there's a hard ceiling on realism without real audio - but this reads
+  // as far more organic than a single clean oscillator tone.
+  function playCreature({
+    pitch,
+    duration = pitch[pitch.length - 1].t,
+    type = 'sawtooth',
+    unisonDetune = 0,
+    filterType = 'lowpass',
+    filterFreq = 4000,
+    filterQ = 1,
+    vibratoRate = 0,
+    vibratoDepth = 0,
+    noiseMix = 0,
+    noiseFilterFreq = 1200,
+    tremoloRate = 0,
+    tremoloDepth = 0,
+    gain = 0.22,
+    jitter = 0.04,
+    delay = 0,
+  }) {
     if (isMuted()) return;
     const audio = getCtx();
     if (!audio) return;
     const t0 = audio.currentTime + delay;
-    const totalDur = points[points.length - 1].t;
-    const osc = audio.createOscillator();
-    osc.type = type;
-    osc.frequency.setValueAtTime(points[0].f, t0);
-    for (let i = 1; i < points.length; i++) {
-      osc.frequency.linearRampToValueAtTime(points[i].f, t0 + points[i].t);
+    const jitterMul = 1 + (Math.random() * 2 - 1) * jitter;
+
+    const filter = audio.createBiquadFilter();
+    filter.type = filterType;
+    filter.Q.value = filterQ;
+    if (Array.isArray(filterFreq)) {
+      filter.frequency.setValueAtTime(filterFreq[0].f, t0);
+      for (let i = 1; i < filterFreq.length; i++) filter.frequency.linearRampToValueAtTime(filterFreq[i].f, t0 + filterFreq[i].t);
+    } else {
+      filter.frequency.value = filterFreq;
     }
+
+    const master = audio.createGain();
+    master.gain.setValueAtTime(0, t0);
+    master.gain.linearRampToValueAtTime(gain, t0 + Math.min(0.025, duration / 5));
+    master.gain.setValueAtTime(gain, t0 + Math.max(0, duration - 0.09));
+    master.gain.linearRampToValueAtTime(0.0001, t0 + duration);
+
+    let outNode = master;
+    if (tremoloRate > 0) {
+      const tremGain = audio.createGain();
+      const lfo = audio.createOscillator();
+      const lfoGain = audio.createGain();
+      lfo.frequency.value = tremoloRate;
+      lfoGain.gain.value = tremoloDepth;
+      lfo.connect(lfoGain).connect(tremGain.gain);
+      tremGain.gain.value = 1 - tremoloDepth;
+      lfo.start(t0);
+      lfo.stop(t0 + duration + 0.05);
+      master.connect(tremGain);
+      outNode = tremGain;
+    }
+    outNode.connect(audio.destination);
+    filter.connect(master);
+
+    let pitchLfo = null;
     if (vibratoRate > 0) {
-      const vibOsc = audio.createOscillator();
-      const vibGain = audio.createGain();
-      vibOsc.frequency.value = vibratoRate;
-      vibGain.gain.value = vibratoDepth;
-      vibOsc.connect(vibGain).connect(osc.frequency);
-      vibOsc.start(t0);
-      vibOsc.stop(t0 + totalDur + 0.05);
+      pitchLfo = audio.createOscillator();
+      const pitchLfoGain = audio.createGain();
+      pitchLfo.frequency.value = vibratoRate;
+      pitchLfoGain.gain.value = vibratoDepth;
+      pitchLfo.connect(pitchLfoGain);
+      pitchLfo.start(t0);
+      pitchLfo.stop(t0 + duration + 0.05);
+      pitchLfo._gainNode = pitchLfoGain;
     }
-    const g = audio.createGain();
-    g.gain.setValueAtTime(0, t0);
-    g.gain.linearRampToValueAtTime(gain, t0 + Math.min(0.03, totalDur / 4));
-    g.gain.setValueAtTime(gain, t0 + Math.max(0, totalDur - 0.08));
-    g.gain.linearRampToValueAtTime(0.0001, t0 + totalDur);
-    osc.connect(g).connect(audio.destination);
-    osc.start(t0);
-    osc.stop(t0 + totalDur + 0.05);
+
+    function makeOsc(detuneCents) {
+      const osc = audio.createOscillator();
+      osc.type = type;
+      osc.detune.value = detuneCents;
+      osc.frequency.setValueAtTime(pitch[0].f * jitterMul, t0);
+      for (let i = 1; i < pitch.length; i++) osc.frequency.linearRampToValueAtTime(pitch[i].f * jitterMul, t0 + pitch[i].t);
+      if (pitchLfo) pitchLfo._gainNode.connect(osc.detune);
+      osc.connect(filter);
+      osc.start(t0);
+      osc.stop(t0 + duration + 0.05);
+    }
+    makeOsc(0);
+    if (unisonDetune) {
+      makeOsc(unisonDetune);
+      makeOsc(-unisonDetune);
+    }
+
+    if (noiseMix > 0) {
+      const bufferSize = Math.max(1, Math.floor(audio.sampleRate * duration));
+      const buffer = audio.createBuffer(1, bufferSize, audio.sampleRate);
+      const data = buffer.getChannelData(0);
+      for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
+      const src = audio.createBufferSource();
+      src.buffer = buffer;
+      const nf = audio.createBiquadFilter();
+      nf.type = 'bandpass';
+      nf.frequency.value = noiseFilterFreq;
+      nf.Q.value = 1.1;
+      const ng = audio.createGain();
+      ng.gain.value = noiseMix;
+      src.connect(nf).connect(ng).connect(master);
+      src.start(t0);
+    }
   }
 
-  // Synthesized animal cries (WebAudio pitch contours, not TTS reading the
-  // onomatopoeia text out loud) - a real bark/meow-shaped sound reads as far
-  // less "robotic" than a speech synthesizer pronouncing "わんわん".
-  const AnimalSounds = {
+  // Synthesized animal cries (WebAudio, not TTS reading the onomatopoeia
+  // text out loud) - kept as the offline-safe fallback for playAnimalClip()
+  // below, used if a real recording ever fails to load/play.
+  const AnimalSoundsSynth = {
     dog() {
-      [0, 190].forEach((delay) =>
-        playEnvelope([{ f: 380, t: 0 }, { f: 440, t: 0.05 }, { f: 220, t: 0.13 }], { type: 'sawtooth', gain: 0.22, delay: delay / 1000 })
+      [0, 200].forEach((delay) =>
+        playCreature({
+          pitch: [{ f: 260, t: 0 }, { f: 420, t: 0.03 }, { f: 180, t: 0.15 }],
+          type: 'sawtooth',
+          unisonDetune: 18,
+          filterType: 'lowpass',
+          filterFreq: [{ f: 600, t: 0 }, { f: 2400, t: 0.04 }, { f: 500, t: 0.16 }],
+          filterQ: 2,
+          noiseMix: 0.18,
+          noiseFilterFreq: 1800,
+          gain: 0.26,
+          delay: delay / 1000,
+        })
       );
     },
     cat() {
-      playEnvelope([{ f: 420, t: 0 }, { f: 680, t: 0.16 }, { f: 380, t: 0.5 }], { type: 'sine', gain: 0.2, vibratoRate: 7, vibratoDepth: 14 });
+      playCreature({
+        pitch: [{ f: 380, t: 0 }, { f: 720, t: 0.16 }, { f: 340, t: 0.55 }],
+        type: 'sawtooth',
+        unisonDetune: 10,
+        filterType: 'bandpass',
+        filterFreq: 1900,
+        filterQ: 3,
+        vibratoRate: 12,
+        vibratoDepth: 18,
+        noiseMix: 0.1,
+        noiseFilterFreq: 2400,
+        gain: 0.22,
+        duration: 0.55,
+      });
     },
     cow() {
-      playEnvelope([{ f: 160, t: 0 }, { f: 140, t: 0.5 }, { f: 90, t: 0.85 }], { type: 'sawtooth', gain: 0.22, vibratoRate: 5, vibratoDepth: 6 });
+      playCreature({
+        pitch: [{ f: 150, t: 0 }, { f: 130, t: 0.5 }, { f: 85, t: 0.9 }],
+        type: 'sawtooth',
+        unisonDetune: 14,
+        filterType: 'lowpass',
+        filterFreq: [{ f: 500, t: 0 }, { f: 900, t: 0.25 }, { f: 400, t: 0.9 }],
+        filterQ: 1.5,
+        vibratoRate: 6,
+        vibratoDepth: 5,
+        noiseMix: 0.12,
+        noiseFilterFreq: 500,
+        gain: 0.24,
+        duration: 0.9,
+      });
     },
     frog() {
-      [0, 240].forEach((delay) =>
-        playEnvelope([{ f: 220, t: 0 }, { f: 130, t: 0.06 }, { f: 180, t: 0.1 }], { type: 'square', gain: 0.15, delay: delay / 1000 })
+      [0, 260].forEach((delay) =>
+        playCreature({
+          pitch: [{ f: 190, t: 0 }, { f: 110, t: 0.05 }, { f: 160, t: 0.1 }],
+          type: 'square',
+          filterType: 'lowpass',
+          filterFreq: 900,
+          filterQ: 3,
+          noiseMix: 0.25,
+          noiseFilterFreq: 700,
+          gain: 0.18,
+          duration: 0.11,
+          delay: delay / 1000,
+        })
       );
     },
     pig() {
-      [0, 180].forEach((delay) =>
-        playEnvelope([{ f: 260, t: 0 }, { f: 330, t: 0.05 }, { f: 170, t: 0.14 }], { type: 'sawtooth', gain: 0.2, delay: delay / 1000 })
+      [0, 190].forEach((delay) =>
+        playCreature({
+          pitch: [{ f: 220, t: 0 }, { f: 300, t: 0.04 }, { f: 140, t: 0.15 }],
+          type: 'sawtooth',
+          unisonDetune: 22,
+          filterType: 'lowpass',
+          filterFreq: [{ f: 500, t: 0 }, { f: 1400, t: 0.05 }, { f: 400, t: 0.16 }],
+          filterQ: 1.8,
+          noiseMix: 0.22,
+          noiseFilterFreq: 1000,
+          gain: 0.22,
+          delay: delay / 1000,
+        })
       );
     },
     chicken() {
-      [523, 587, 659, 523, 392].forEach((f, i) => playTone({ freq: f, duration: 0.14, type: 'triangle', gain: 0.16, delay: i * 0.11 }));
-    },
-    lion() {
-      playEnvelope([{ f: 110, t: 0 }, { f: 150, t: 0.15 }, { f: 85, t: 0.7 }], { type: 'sawtooth', gain: 0.22 });
-      playNoise({ duration: 0.7, filterFreq: 250, gain: 0.09 });
-    },
-    elephant() {
-      playEnvelope(
-        [{ f: 300, t: 0 }, { f: 720, t: 0.15 }, { f: 500, t: 0.4 }, { f: 620, t: 0.55 }, { f: 430, t: 0.78 }],
-        { type: 'sawtooth', gain: 0.2 }
+      [523, 587, 659, 523, 392].forEach((f, i) =>
+        playCreature({
+          pitch: [{ f, t: 0 }, { f: f * 0.97, t: 0.13 }],
+          type: 'sawtooth',
+          unisonDetune: 8,
+          filterType: 'bandpass',
+          filterFreq: f * 1.4,
+          filterQ: 2.5,
+          noiseMix: 0.08,
+          noiseFilterFreq: f * 2,
+          gain: 0.17,
+          duration: 0.14,
+          delay: i * 0.11,
+        })
       );
     },
+    lion() {
+      playCreature({
+        pitch: [{ f: 95, t: 0 }, { f: 130, t: 0.15 }, { f: 70, t: 0.75 }],
+        type: 'sawtooth',
+        unisonDetune: 20,
+        filterType: 'lowpass',
+        filterFreq: [{ f: 350, t: 0 }, { f: 700, t: 0.2 }, { f: 300, t: 0.75 }],
+        filterQ: 1.2,
+        tremoloRate: 26,
+        tremoloDepth: 0.4,
+        noiseMix: 0.3,
+        noiseFilterFreq: 350,
+        gain: 0.24,
+        duration: 0.75,
+      });
+    },
+    elephant() {
+      playCreature({
+        pitch: [{ f: 260, t: 0 }, { f: 780, t: 0.14 }, { f: 520, t: 0.4 }, { f: 640, t: 0.55 }, { f: 420, t: 0.8 }],
+        type: 'sawtooth',
+        unisonDetune: 16,
+        filterType: 'bandpass',
+        filterFreq: 1200,
+        filterQ: 2,
+        noiseMix: 0.15,
+        noiseFilterFreq: 1600,
+        gain: 0.2,
+        duration: 0.8,
+      });
+    },
     sheep() {
-      playEnvelope([{ f: 320, t: 0 }, { f: 380, t: 0.25 }, { f: 300, t: 0.5 }], { type: 'sawtooth', gain: 0.2, vibratoRate: 9, vibratoDepth: 18 });
+      playCreature({
+        pitch: [{ f: 300, t: 0 }, { f: 370, t: 0.22 }, { f: 280, t: 0.5 }],
+        type: 'sawtooth',
+        unisonDetune: 12,
+        filterType: 'bandpass',
+        filterFreq: 1400,
+        filterQ: 2.2,
+        vibratoRate: 15,
+        vibratoDepth: 22,
+        noiseMix: 0.15,
+        noiseFilterFreq: 1800,
+        gain: 0.22,
+        duration: 0.5,
+      });
     },
   };
+
+  // Real recorded animal cries (small licensed/user-supplied mp3 clips in
+  // shared/sounds/) - these are what actually play. The synthesized
+  // versions above are only a fallback for the rare case a clip fails to
+  // load or play (e.g. a corrupt cache entry), so a tap never goes silent.
+  const ANIMAL_CLIP_FILES = {
+    dog: 'dog.mp3',
+    cat: 'cat.mp3',
+    cow: 'cow.mp3',
+    frog: 'frog.mp3',
+    pig: 'pig.mp3',
+    chicken: 'chicken.mp3',
+    lion: 'lion.mp3',
+    elephant: 'elephant.mp3',
+    sheep: 'sheep.mp3',
+  };
+  const animalClipCache = {};
+  function getAnimalClip(key) {
+    if (!animalClipCache[key]) {
+      const el = new Audio(BASE + 'shared/sounds/' + ANIMAL_CLIP_FILES[key]);
+      el.preload = 'auto';
+      animalClipCache[key] = el;
+    }
+    return animalClipCache[key];
+  }
+  function playAnimalClip(key) {
+    if (isMuted()) return;
+    try {
+      const el = getAnimalClip(key);
+      el.currentTime = 0;
+      const p = el.play();
+      if (p && p.catch) p.catch(() => AnimalSoundsSynth[key] && AnimalSoundsSynth[key]());
+    } catch (e) {
+      if (AnimalSoundsSynth[key]) AnimalSoundsSynth[key]();
+    }
+  }
+  const AnimalSounds = {};
+  Object.keys(ANIMAL_CLIP_FILES).forEach((key) => {
+    AnimalSounds[key] = () => playAnimalClip(key);
+  });
 
   const notes = { C: 261.63, D: 293.66, E: 329.63, F: 349.23, G: 392.0, A: 440.0, B: 493.88, C2: 523.25, D2: 587.33, E2: 659.25 };
 

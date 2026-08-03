@@ -2,7 +2,7 @@
 // (the whole point: this app is meant to be used out and about).
 // Paths are relative to this file's own location, so it works whether the
 // site is hosted at a domain root or a GitHub Pages project subpath.
-const CACHE_VERSION = 'v10';
+const CACHE_VERSION = 'v12';
 const CACHE_NAME = `asobibako-${CACHE_VERSION}`;
 
 const PRECACHE_URLS = [
@@ -20,6 +20,15 @@ const PRECACHE_URLS = [
   'icons/characters/kuma.png',
   'icons/characters/neko.png',
   'icons/characters/usagi.png',
+  'shared/sounds/dog.mp3',
+  'shared/sounds/cat.mp3',
+  'shared/sounds/cow.mp3',
+  'shared/sounds/frog.mp3',
+  'shared/sounds/pig.mp3',
+  'shared/sounds/chicken.mp3',
+  'shared/sounds/lion.mp3',
+  'shared/sounds/elephant.mp3',
+  'shared/sounds/sheep.mp3',
   'games/bubble-pop/index.html',
   'games/bubble-pop/script.js',
   'games/finger-paint/index.html',
