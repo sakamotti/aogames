@@ -199,9 +199,9 @@
   }
 
   // Synthesized animal cries (WebAudio, not TTS reading the onomatopoeia
-  // text out loud) - a real bark/meow-shaped sound reads as far less
-  // "robotic" than a speech synthesizer pronouncing "わんわん".
-  const AnimalSounds = {
+  // text out loud) - kept as the offline-safe fallback for playAnimalClip()
+  // below, used if a real recording ever fails to load/play.
+  const AnimalSoundsSynth = {
     dog() {
       [0, 200].forEach((delay) =>
         playCreature({
@@ -346,6 +346,46 @@
       });
     },
   };
+
+  // Real recorded animal cries (small licensed/user-supplied mp3 clips in
+  // shared/sounds/) - these are what actually play. The synthesized
+  // versions above are only a fallback for the rare case a clip fails to
+  // load or play (e.g. a corrupt cache entry), so a tap never goes silent.
+  const ANIMAL_CLIP_FILES = {
+    dog: 'dog.mp3',
+    cat: 'cat.mp3',
+    cow: 'cow.mp3',
+    frog: 'frog.mp3',
+    pig: 'pig.mp3',
+    chicken: 'chicken.mp3',
+    lion: 'lion.mp3',
+    elephant: 'elephant.mp3',
+    sheep: 'sheep.mp3',
+  };
+  const animalClipCache = {};
+  function getAnimalClip(key) {
+    if (!animalClipCache[key]) {
+      const el = new Audio(BASE + 'shared/sounds/' + ANIMAL_CLIP_FILES[key]);
+      el.preload = 'auto';
+      animalClipCache[key] = el;
+    }
+    return animalClipCache[key];
+  }
+  function playAnimalClip(key) {
+    if (isMuted()) return;
+    try {
+      const el = getAnimalClip(key);
+      el.currentTime = 0;
+      const p = el.play();
+      if (p && p.catch) p.catch(() => AnimalSoundsSynth[key] && AnimalSoundsSynth[key]());
+    } catch (e) {
+      if (AnimalSoundsSynth[key]) AnimalSoundsSynth[key]();
+    }
+  }
+  const AnimalSounds = {};
+  Object.keys(ANIMAL_CLIP_FILES).forEach((key) => {
+    AnimalSounds[key] = () => playAnimalClip(key);
+  });
 
   const notes = { C: 261.63, D: 293.66, E: 329.63, F: 349.23, G: 392.0, A: 440.0, B: 493.88, C2: 523.25, D2: 587.33, E2: 659.25 };
 
