@@ -27,6 +27,9 @@
     prizeEmoji: document.getElementById('prizeEmoji'),
     prizeLabel: document.getElementById('prizeLabel'),
     collectionRow: document.getElementById('collectionRow'),
+    prizeReveal: document.getElementById('prizeReveal'),
+    revealEmoji: document.getElementById('revealEmoji'),
+    revealName: document.getElementById('revealName'),
   };
 
   // Decorative bobbing capsules inside the dome window.
@@ -178,32 +181,38 @@
 
     requestAnimationFrame(() => els.capsule.classList.add('drop'));
 
+    let isNew = false;
     setTimeout(() => {
       KidsApp.Sound.pop();
       els.capsule.classList.add('open');
-      KidsApp.AnimalSounds[prize.key]();
       const rect = els.capsule.getBoundingClientRect();
       KidsApp.confettiBurst(document.body, rect.left + rect.width / 2, rect.top + rect.height / 2, 14);
 
-      const isNew = !collection.has(prize.key);
+      isNew = !collection.has(prize.key);
       collection.add(prize.key);
       saveCollection(collection);
       slotEls[prize.key].classList.add('got');
-
       els.prizeLabel.textContent = prize.name + ' が でてきたよ！';
-      if (isNew) {
-        const badge = document.createElement('div');
-        badge.className = 'new-badge';
-        badge.textContent = 'はじめて！';
-        badge.style.left = rect.left + rect.width / 2 + 'px';
-        badge.style.top = rect.top - 10 + 'px';
-        document.body.appendChild(badge);
-        setTimeout(() => badge.remove(), 950);
-        setTimeout(() => KidsApp.speak(prize.name + '、はじめて ゲットだね！'), 400);
-      } else {
-        setTimeout(() => KidsApp.speak(prize.name + 'が でてきたよ'), 400);
-      }
     }, 600);
+
+    // The big reward moment: a large centered card, allowed to cover the
+    // machine, held on screen long enough to actually register.
+    setTimeout(() => {
+      els.revealEmoji.textContent = prize.emoji;
+      els.revealName.textContent = prize.name;
+      els.prizeReveal.classList.toggle('new', isNew);
+      els.prizeReveal.classList.add('show');
+      KidsApp.AnimalSounds[prize.key]();
+      const cardRect = els.prizeReveal.querySelector('.prize-reveal__card').getBoundingClientRect();
+      KidsApp.confettiBurst(document.body, cardRect.left + cardRect.width / 2, cardRect.top + cardRect.height / 2, 22);
+      setTimeout(() => {
+        KidsApp.speak(isNew ? prize.name + '、はじめて ゲットだね！' : prize.name + 'が でてきたよ');
+      }, 350);
+    }, 950);
+
+    setTimeout(() => {
+      els.prizeReveal.classList.remove('show', 'new');
+    }, 4300);
 
     setTimeout(() => {
       els.capsule.classList.remove('drop', 'open');
@@ -216,6 +225,6 @@
       busy = false;
       resetCoin();
       els.prizeLabel.textContent = '';
-    }, 2900);
+    }, 4700);
   }
 })();

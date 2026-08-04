@@ -289,13 +289,60 @@
     color: var(--ink-soft);
     min-height: 1.4em;
   }
-  .new-badge {
-    position: absolute;
+  /* The big reward moment - deliberately allowed to cover the machine
+     (position:fixed, high z-index) so the prize itself is the focus,
+     not a tiny icon down in the tray. */
+  .prize-reveal {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     pointer-events: none;
+    z-index: 900;
+    opacity: 0;
+    transition: opacity 350ms ease-out;
+  }
+  .prize-reveal.show { opacity: 1; }
+  .prize-reveal__backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(74, 59, 120, 0.18);
+  }
+  .prize-reveal__card {
+    position: relative;
+    background: var(--white);
+    border-radius: 36px;
+    box-shadow: 0 24px 60px rgba(74, 59, 120, 0.4);
+    padding: 34px 46px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    transform: scale(0.35) rotate(-6deg);
+    transition: transform 450ms cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  .prize-reveal.show .prize-reveal__card {
+    transform: scale(1) rotate(0deg);
+  }
+  .prize-reveal__emoji {
+    font-size: min(34vw, 130px);
+    line-height: 1;
+    filter: drop-shadow(0 12px 16px rgba(74, 59, 120, 0.3));
+  }
+  .prize-reveal__name {
+    font-size: clamp(22px, 6vw, 30px);
     font-weight: 800;
-    font-size: 16px;
+    color: var(--ink);
+  }
+  .prize-reveal__new {
+    font-size: 17px;
+    font-weight: 800;
     color: var(--pink);
-    animation: celebrate-pop 900ms ease-out forwards;
+    opacity: 0;
+  }
+  .prize-reveal.new .prize-reveal__new {
+    animation: choice-badge-pop 500ms ease-out 250ms both;
   }
 </style>
 </head>
@@ -332,6 +379,16 @@
     </div>
     <p class="prize-label" id="prizeLabel"></p>
   </div>
+
+  <div class="prize-reveal" id="prizeReveal">
+    <div class="prize-reveal__backdrop"></div>
+    <div class="prize-reveal__card">
+      <div class="prize-reveal__emoji" id="revealEmoji"></div>
+      <div class="prize-reveal__name" id="revealName"></div>
+      <div class="prize-reveal__new" id="revealNew">はじめて！</div>
+    </div>
+  </div>
+
   <script src="../../shared/app.js"></script>
   <script src="script.js"></script>
 </body>
