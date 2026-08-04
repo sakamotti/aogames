@@ -163,37 +163,52 @@
     }
   });
 
+  let pendingPrize = null;
+
   function dispense() {
     busy = true;
     els.crank.classList.remove('ready');
     KidsApp.Sound.whoosh();
 
     const prize = KidsApp.choice(ANIMALS);
+    pendingPrize = prize;
     els.capsule.style.background = 'none';
     const topHalf = els.capsule.querySelector('.capsule__half--top');
-    const bottomHalf = els.capsule.querySelector('.capsule__half--bottom');
     const color = KidsApp.choice(CAPSULE_COLORS);
     topHalf.style.background = color;
 
-    els.capsule.classList.remove('open');
+    els.capsule.classList.remove('open', 'waiting');
     els.prizeEmoji.textContent = prize.emoji;
     els.prizeLabel.textContent = '';
 
     requestAnimationFrame(() => els.capsule.classList.add('drop'));
 
-    let isNew = false;
+    // A real gachapon capsule comes out closed - the child has to open it
+    // themselves to see what's inside, at their own pace.
     setTimeout(() => {
-      KidsApp.Sound.pop();
-      els.capsule.classList.add('open');
-      const rect = els.capsule.getBoundingClientRect();
-      KidsApp.confettiBurst(document.body, rect.left + rect.width / 2, rect.top + rect.height / 2, 14);
-
-      isNew = !collection.has(prize.key);
-      collection.add(prize.key);
-      saveCollection(collection);
-      slotEls[prize.key].classList.add('got');
-      els.prizeLabel.textContent = prize.name + ' が でてきたよ！';
+      els.capsule.classList.add('waiting');
+      els.prizeLabel.textContent = 'カプセルを タップしてね';
     }, 600);
+  }
+
+  els.capsule.addEventListener('pointerdown', () => {
+    if (!els.capsule.classList.contains('waiting')) return;
+    openCapsule();
+  });
+
+  function openCapsule() {
+    const prize = pendingPrize;
+    els.capsule.classList.remove('waiting');
+    els.capsule.classList.add('open');
+    KidsApp.Sound.pop();
+    const rect = els.capsule.getBoundingClientRect();
+    KidsApp.confettiBurst(document.body, rect.left + rect.width / 2, rect.top + rect.height / 2, 14);
+
+    const isNew = !collection.has(prize.key);
+    collection.add(prize.key);
+    saveCollection(collection);
+    slotEls[prize.key].classList.add('got');
+    els.prizeLabel.textContent = prize.name + ' が でてきたよ！';
 
     // The big reward moment: a large centered card, allowed to cover the
     // machine, held on screen long enough to actually register.
@@ -208,14 +223,14 @@
       setTimeout(() => {
         KidsApp.speak(isNew ? prize.name + '、はじめて ゲットだね！' : prize.name + 'が でてきたよ');
       }, 350);
-    }, 950);
+    }, 350);
 
     setTimeout(() => {
       els.prizeReveal.classList.remove('show', 'new');
-    }, 4300);
+    }, 3700);
 
     setTimeout(() => {
-      els.capsule.classList.remove('drop', 'open');
+      els.capsule.classList.remove('drop', 'open', 'waiting');
       els.crankHandle.style.transition = 'none';
       els.crankHandle.style.transform = 'rotate(0deg)';
       requestAnimationFrame(() => {
@@ -223,8 +238,9 @@
       });
       crankTaps = 0;
       busy = false;
+      pendingPrize = null;
       resetCoin();
       els.prizeLabel.textContent = '';
-    }, 4700);
+    }, 4100);
   }
 })();
