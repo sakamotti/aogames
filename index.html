@@ -91,6 +91,13 @@
     max-width: 480px;
     line-height: 1.6;
   }
+  .version-tag {
+    margin-top: 10px;
+    font-size: 11px;
+    color: var(--ink-soft);
+    opacity: 0.6;
+    text-align: center;
+  }
 </style>
 </head>
 <body>
@@ -163,11 +170,28 @@
     </div>
 
     <p class="home-footer">保護者の方へ：広告・課金・通信は一切ありません。オフラインでも遊べます。<br>音を消すには右上の 🔊 ボタンをタップしてください。</p>
+    <p class="version-tag" id="versionTag"></p>
   </div>
 
   <script src="shared/app.js"></script>
   <script>
     KidsApp.initCommon({ home: false });
+
+    // Shows the version the service worker is *actually* running, so it's
+    // obvious at a glance whether a fresh install/update really landed
+    // instead of the app quietly serving old cached files.
+    function updateVersionTag() {
+      const el = document.getElementById('versionTag');
+      KidsApp.getServiceWorkerVersion().then((v) => {
+        el.textContent = v ? 'バージョン ' + v : '';
+      });
+    }
+    updateVersionTag();
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        setTimeout(updateVersionTag, 300);
+      });
+    }
   </script>
 </body>
 </html>
