@@ -640,6 +640,27 @@
     });
   }
 
+  // Asks the service worker that's actually controlling this page which
+  // cache version it's running - the truthful answer to "did my update
+  // really take effect", as opposed to a version string baked into the
+  // page itself (which could be served fresh over a network request even
+  // while the SW's cached assets underneath it are still stale).
+  function getServiceWorkerVersion() {
+    return new Promise((resolve) => {
+      if (!('serviceWorker' in navigator) || !navigator.serviceWorker.controller) {
+        resolve(null);
+        return;
+      }
+      const channel = new MessageChannel();
+      const timeout = setTimeout(() => resolve(null), 1500);
+      channel.port1.onmessage = (e) => {
+        clearTimeout(timeout);
+        resolve((e.data && e.data.version) || null);
+      };
+      navigator.serviceWorker.controller.postMessage({ type: 'GET_VERSION' }, [channel.port2]);
+    });
+  }
+
   function rand(min, max) { return Math.random() * (max - min) + min; }
   function choice(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
 
@@ -704,5 +725,6 @@
     mascotBubble,
     BOTTOM_GAP: BOTTOM_GAP_PX,
     AnimalSounds,
+    getServiceWorkerVersion,
   };
 })(window);
