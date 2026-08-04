@@ -20,7 +20,9 @@
     machine: document.getElementById('machine'),
     crank: document.getElementById('crank'),
     crankHandle: document.getElementById('crankHandle'),
-    coinBtn: document.getElementById('coinBtn'),
+    coinTray: document.getElementById('coinTray'),
+    coinDrag: document.getElementById('coinDrag'),
+    slot: document.querySelector('.machine__slot'),
     capsule: document.getElementById('capsule'),
     prizeEmoji: document.getElementById('prizeEmoji'),
     prizeLabel: document.getElementById('prizeLabel'),
@@ -64,34 +66,77 @@
   let crankTaps = 0;
   let busy = false;
 
-  function flyCoin() {
-    const btnRect = els.coinBtn.getBoundingClientRect();
-    const slotRect = els.machine.querySelector('.machine__slot').getBoundingClientRect();
-    const coin = document.createElement('div');
-    coin.className = 'coin-flying';
-    coin.textContent = '🪙';
-    coin.style.left = btnRect.left + btnRect.width / 2 + 'px';
-    coin.style.top = btnRect.top + btnRect.height / 2 + 'px';
-    coin.style.transform = 'translate(-50%, -50%) scale(1)';
-    document.body.appendChild(coin);
-    requestAnimationFrame(() => {
-      coin.style.left = slotRect.left + slotRect.width / 2 + 'px';
-      coin.style.top = slotRect.top + slotRect.height / 2 + 'px';
-      coin.style.transform = 'translate(-50%, -50%) scale(0.3)';
-      coin.style.opacity = '0';
-    });
-    setTimeout(() => coin.remove(), 450);
+  // ---- Coin: slide it up from its tray into the slot (not a tap) ----
+  let restPos = { x: 0, y: 0 };
+  let targetPos = { x: 0, y: 0 };
+  let dragging = false;
+  const SUCCESS_PROGRESS = 0.6; // doesn't need to be dragged all the way to the slot to count
+
+  function setCoinTransform(scale) {
+    els.coinDrag.style.transform = `translate(-50%, -50%) scale(${scale})`;
+  }
+  function placeCoinAt(x, y) {
+    els.coinDrag.style.left = x + 'px';
+    els.coinDrag.style.top = y + 'px';
+  }
+  function computeCoinPositions() {
+    const trayRect = els.coinTray.getBoundingClientRect();
+    restPos = { x: trayRect.left + trayRect.width / 2, y: trayRect.top + trayRect.height / 2 };
+    const slotRect = els.slot.getBoundingClientRect();
+    targetPos = { x: slotRect.left + slotRect.width / 2, y: slotRect.top + slotRect.height / 2 };
+    if (!dragging && !hasCoin) {
+      setCoinTransform(1);
+      placeCoinAt(restPos.x, restPos.y);
+    }
   }
 
-  els.coinBtn.addEventListener('pointerdown', () => {
+  els.coinDrag.addEventListener('pointerdown', (e) => {
     if (busy || hasCoin) return;
-    hasCoin = true;
-    els.coinBtn.disabled = true;
-    flyCoin();
-    KidsApp.Sound.click();
-    setTimeout(() => KidsApp.Sound.chime(), 300);
-    els.crank.classList.add('ready');
+    dragging = true;
+    els.coinDrag.classList.add('dragging');
+    els.coinDrag.setPointerCapture(e.pointerId);
+    KidsApp.Sound.unlock();
   });
+  els.coinDrag.addEventListener('pointermove', (e) => {
+    if (!dragging) return;
+    const y = Math.max(targetPos.y, Math.min(restPos.y, e.clientY));
+    const span = restPos.y - targetPos.y || 1;
+    const progress = (restPos.y - y) / span;
+    const x = restPos.x + (targetPos.x - restPos.x) * progress;
+    placeCoinAt(x, y);
+  });
+  function endCoinDrag() {
+    if (!dragging) return;
+    dragging = false;
+    els.coinDrag.classList.remove('dragging');
+    const curTop = parseFloat(els.coinDrag.style.top) || restPos.y;
+    const span = restPos.y - targetPos.y || 1;
+    const progress = (restPos.y - curTop) / span;
+    if (progress >= SUCCESS_PROGRESS) {
+      hasCoin = true;
+      placeCoinAt(targetPos.x, targetPos.y);
+      KidsApp.Sound.click();
+      setTimeout(() => {
+        setCoinTransform(0);
+        KidsApp.Sound.chime();
+      }, 90);
+      els.crank.classList.add('ready');
+    } else {
+      placeCoinAt(restPos.x, restPos.y);
+      KidsApp.Sound.tap();
+    }
+  }
+  els.coinDrag.addEventListener('pointerup', endCoinDrag);
+  els.coinDrag.addEventListener('pointercancel', endCoinDrag);
+
+  requestAnimationFrame(() => requestAnimationFrame(computeCoinPositions));
+  window.addEventListener('resize', computeCoinPositions);
+  window.addEventListener('orientationchange', () => setTimeout(computeCoinPositions, 250));
+
+  function resetCoin() {
+    hasCoin = false;
+    computeCoinPositions();
+  }
 
   function shakeMachine() {
     els.machine.classList.remove('shake');
@@ -117,8 +162,6 @@
 
   function dispense() {
     busy = true;
-    hasCoin = false;
-    els.coinBtn.disabled = true;
     els.crank.classList.remove('ready');
     KidsApp.Sound.whoosh();
 
@@ -171,7 +214,7 @@
       });
       crankTaps = 0;
       busy = false;
-      els.coinBtn.disabled = false;
+      resetCoin();
       els.prizeLabel.textContent = '';
     }, 2900);
   }
