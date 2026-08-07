@@ -27,10 +27,11 @@
     prizeEmoji: document.getElementById('prizeEmoji'),
     prizeLabel: document.getElementById('prizeLabel'),
     collectionRow: document.getElementById('collectionRow'),
-    prizeReveal: document.getElementById('prizeReveal'),
-    revealEmoji: document.getElementById('revealEmoji'),
-    revealName: document.getElementById('revealName'),
+    prizeHero: document.getElementById('prizeHero'),
+    prizeName: document.getElementById('prizeName'),
+    prizeNameText: document.getElementById('prizeNameText'),
   };
+  const HERO_FLIGHT_MS = 650; // must match the .prize-hero.show transition duration in CSS
 
   // Decorative bobbing capsules inside the dome window.
   for (let i = 0; i < 10; i++) {
@@ -202,7 +203,9 @@
     els.capsule.classList.add('open');
     KidsApp.Sound.pop();
     const rect = els.capsule.getBoundingClientRect();
-    KidsApp.confettiBurst(document.body, rect.left + rect.width / 2, rect.top + rect.height / 2, 14);
+    const startX = rect.left + rect.width / 2;
+    const startY = rect.top + rect.height / 2;
+    KidsApp.confettiBurst(document.body, startX, startY, 14);
 
     const isNew = !collection.has(prize.key);
     collection.add(prize.key);
@@ -210,26 +213,49 @@
     slotEls[prize.key].classList.add('got');
     els.prizeLabel.textContent = prize.name + ' が でてきたよ！';
 
-    // The big reward moment: a large centered card, allowed to cover the
-    // machine, held on screen long enough to actually register.
+    // No popup card - the character itself leaps out of the capsule.
+    // Start the hero exactly at the capsule's on-screen spot/size (right
+    // where the little in-capsule emoji already appears), then let it fly
+    // up and grow into the big landed pose.
+    els.prizeHero.textContent = prize.emoji;
+    els.prizeHero.classList.remove('show', 'fade-out', 'settled');
+    els.prizeHero.style.transition = 'none';
+    els.prizeHero.style.left = startX + 'px';
+    els.prizeHero.style.top = startY + 'px';
+    els.prizeHero.style.fontSize = '44px';
+    void els.prizeHero.offsetWidth; // reflow so the next change is transitioned
+    els.prizeHero.style.transition = '';
+
     setTimeout(() => {
-      els.revealEmoji.textContent = prize.emoji;
-      els.revealName.textContent = prize.name;
-      els.prizeReveal.classList.toggle('new', isNew);
-      els.prizeReveal.classList.add('show');
+      const landX = window.innerWidth / 2;
+      const landY = window.innerHeight * 0.4;
+      els.prizeHero.style.left = landX + 'px';
+      els.prizeHero.style.top = landY + 'px';
+      els.prizeHero.style.fontSize = 'min(42vw, 200px)';
+      els.prizeHero.classList.add('show');
       KidsApp.AnimalSounds[prize.key]();
-      const cardRect = els.prizeReveal.querySelector('.prize-reveal__card').getBoundingClientRect();
-      KidsApp.confettiBurst(document.body, cardRect.left + cardRect.width / 2, cardRect.top + cardRect.height / 2, 22);
-      setTimeout(() => {
-        KidsApp.speak(isNew ? prize.name + '、はじめて ゲットだね！' : prize.name + 'が でてきたよ');
-      }, 350);
     }, 350);
 
     setTimeout(() => {
-      els.prizeReveal.classList.remove('show', 'new');
+      els.prizeHero.classList.add('settled');
+      const heroRect = els.prizeHero.getBoundingClientRect();
+      els.prizeNameText.textContent = prize.name;
+      els.prizeName.classList.toggle('new', isNew);
+      els.prizeName.style.left = window.innerWidth / 2 + 'px';
+      els.prizeName.style.top = heroRect.bottom + 10 + 'px';
+      els.prizeName.classList.add('show');
+      KidsApp.confettiBurst(document.body, heroRect.left + heroRect.width / 2, heroRect.top + heroRect.height / 2, 22);
+      KidsApp.speak(isNew ? prize.name + '、はじめて ゲットだね！' : prize.name + 'が でてきたよ');
+    }, 350 + HERO_FLIGHT_MS);
+
+    setTimeout(() => {
+      els.prizeHero.classList.add('fade-out');
+      els.prizeName.classList.remove('show');
     }, 3700);
 
     setTimeout(() => {
+      els.prizeHero.classList.remove('show', 'fade-out', 'settled');
+      els.prizeName.classList.remove('new');
       els.capsule.classList.remove('drop', 'open', 'waiting');
       els.crankHandle.style.transition = 'none';
       els.crankHandle.style.transform = 'rotate(0deg)';
