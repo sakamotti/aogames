@@ -15,7 +15,8 @@
       x: KidsApp.rand(r, stage.width - r),
       y: onScreen ? KidsApp.rand(r, stage.height - r) : stage.height + r + KidsApp.rand(0, 120),
       r,
-      vy: KidsApp.rand(18, 34),
+      vy: KidsApp.rand(60, 105),
+      vx: KidsApp.rand(-45, 45),
       sway: KidsApp.rand(0.6, 1.6),
       swayPhase: KidsApp.rand(0, Math.PI * 2),
       color: KidsApp.choice(PALETTE),
@@ -24,12 +25,14 @@
     });
   }
 
+  // Generous hit radius - fast-moving targets need forgiving hitboxes for
+  // small hands that won't land a tap exactly on center.
   function hitTest(px, py) {
     for (let i = bubbles.length - 1; i >= 0; i--) {
       const b = bubbles[i];
       if (b.popped) continue;
       const d = Math.hypot(px - b.x, py - b.y);
-      if (d <= b.r) return b;
+      if (d <= b.r * 1.2) return b;
     }
     return null;
   }
@@ -62,7 +65,7 @@
     const dt = Math.min(0.05, (now - last) / 1000);
     last = now;
 
-    if (now - lastSpawn > 650 && bubbles.length < 14) {
+    if (now - lastSpawn > 500 && bubbles.length < 14) {
       spawnBubble();
       lastSpawn = now;
     }
@@ -76,7 +79,17 @@
       } else {
         b.y -= b.vy * dt;
         b.swayPhase += dt * b.sway;
-        b.x += Math.sin(b.swayPhase) * 0.6;
+        b.x += Math.sin(b.swayPhase) * 0.6 + b.vx * dt;
+        // Drift sideways across the whole width instead of rising in a
+        // straight line, so kids have to move around the screen to pop
+        // them rather than camping under one spot.
+        if (b.x < b.r) {
+          b.x = b.r;
+          b.vx = Math.abs(b.vx);
+        } else if (b.x > stage.width - b.r) {
+          b.x = stage.width - b.r;
+          b.vx = -Math.abs(b.vx);
+        }
       }
     });
     bubbles = bubbles.filter((b) => (b.popped ? b.popT < 0.25 : b.y > -b.r - 20));
