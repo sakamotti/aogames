@@ -2,7 +2,7 @@
 // (the whole point: this app is meant to be used out and about).
 // Paths are relative to this file's own location, so it works whether the
 // site is hosted at a domain root or a GitHub Pages project subpath.
-const CACHE_VERSION = 'v18';
+const CACHE_VERSION = 'v20';
 const CACHE_NAME = `asobibako-${CACHE_VERSION}`;
 
 const PRECACHE_URLS = [
@@ -57,6 +57,8 @@ const PRECACHE_URLS = [
   'games/elevator/script.js',
   'games/gacha/index.html',
   'games/gacha/script.js',
+  'games/night-safari/index.html',
+  'games/night-safari/script.js',
 ];
 
 self.addEventListener('install', (event) => {

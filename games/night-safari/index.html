@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#151033">
+<title>よるのどうぶつさがし - あそびばこ</title>
+<link rel="manifest" href="../../manifest.json">
+<link rel="icon" href="../../icons/favicon-32.png" sizes="32x32">
+<link rel="stylesheet" href="../../shared/style.css">
+<style>
+  body { background: linear-gradient(180deg, #0d1230 0%, #241a4d 70%, #2f2064 100%); }
+  .play-canvas { background: transparent; }
+
+  .night-progress {
+    position: absolute;
+    top: calc(var(--safe-top) + 14px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(255,255,255,0.15);
+    color: #fff;
+    border-radius: 999px;
+    padding: 8px 18px;
+    font-size: clamp(15px, 3.6vw, 18px);
+    z-index: 5;
+    box-shadow: var(--shadow-soft);
+  }
+
+  .hint-text {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    color: rgba(255,255,255,0.9);
+    font-size: clamp(15px, 4.2vw, 20px);
+    text-align: center;
+    line-height: 1.6;
+    max-width: 260px;
+    pointer-events: none;
+    z-index: 4;
+    text-shadow: 0 2px 8px rgba(0,0,0,0.4);
+    transition: opacity 500ms ease-out;
+  }
+  .hint-text.hidden { opacity: 0; }
+</style>
+</head>
+<body>
+  <div class="stage">
+    <canvas class="play-canvas" id="c"></canvas>
+  </div>
+  <div class="night-progress" id="progress">🔦 0 / 5</div>
+  <p class="hint-text" id="hint">ゆびで がめんを なぞって<br>ライトで どうぶつを さがそう</p>
+  <script src="../../shared/app.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>

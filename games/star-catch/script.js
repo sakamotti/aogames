@@ -17,12 +17,13 @@
   }
 
   function spawn() {
-    const r = KidsApp.rand(18, 29);
+    const r = KidsApp.rand(26, 38);
     stars.push({
       x: KidsApp.rand(r, stage.width - r),
       y: -r,
       r,
-      vy: KidsApp.rand(48, 82),
+      vy: KidsApp.rand(95, 155),
+      vx: KidsApp.rand(-55, 55),
       spin: KidsApp.rand(-1, 1),
       angle: 0,
       twinkle: KidsApp.rand(0, Math.PI * 2),
@@ -58,7 +59,7 @@
     for (let i = stars.length - 1; i >= 0; i--) {
       const s = stars[i];
       if (s.caught) continue;
-      if (Math.hypot(px - s.x, py - s.y) <= s.r * 1.4) return s;
+      if (Math.hypot(px - s.x, py - s.y) <= s.r * 1.6) return s;
     }
     return null;
   }
@@ -90,7 +91,7 @@
     const dt = Math.min(0.05, (now - last) / 1000);
     last = now;
 
-    if (now - lastSpawn > 680 && stars.length < 11) {
+    if (now - lastSpawn > 560 && stars.length < 12) {
       spawn();
       lastSpawn = now;
     }
@@ -106,6 +107,16 @@
         s.r *= 0.94;
       } else {
         s.y += s.vy * dt;
+        s.x += s.vx * dt;
+        // Drift sideways as they fall so stars spread across the whole
+        // screen instead of dropping straight down one column.
+        if (s.x < s.r) {
+          s.x = s.r;
+          s.vx = Math.abs(s.vx);
+        } else if (s.x > stage.width - s.r) {
+          s.x = stage.width - s.r;
+          s.vx = -Math.abs(s.vx);
+        }
       }
     });
     stars = stars.filter((s) => (s.caught ? s.t < 0.4 : s.y < stage.height + s.r + 10));
