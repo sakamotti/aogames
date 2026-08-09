@@ -621,8 +621,19 @@
   // ---------------------------------------------------------------------
   function registerServiceWorker() {
     if (!('serviceWorker' in navigator)) return;
+    let registration = null;
     global.addEventListener('load', () => {
-      navigator.serviceWorker.register(BASE + 'sw.js').catch(() => {});
+      navigator.serviceWorker
+        .register(BASE + 'sw.js')
+        .then((reg) => {
+          registration = reg;
+          // Don't just rely on the browser's own (often lazy/throttled)
+          // update check - ask explicitly right away too, so a fresh
+          // install picks up a newer version as soon as possible instead
+          // of waiting on implicit timing.
+          reg.update().catch(() => {});
+        })
+        .catch(() => {});
     });
     // Auto-refresh once a newer cached version takes over, so an update we
     // ship doesn't silently sit uninstalled on a device that already has
@@ -637,6 +648,21 @@
         global.location.reload();
       }
       hadController = true;
+    });
+
+    // An installed/standalone PWA is usually *resumed* from the background
+    // (tapping the home-screen icon while it's already running there)
+    // rather than freshly navigated to - and browsers only implicitly
+    // check for a newer service worker on navigation, and even then only
+    // occasionally. Left alone, that means reopening the app can silently
+    // skip the update check for a long time. Forcing an explicit check
+    // whenever the app comes back to the foreground makes updates land on
+    // the very next time it's used, instead of waiting on the browser's
+    // own lazy schedule.
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible' && registration) {
+        registration.update().catch(() => {});
+      }
     });
   }
 
