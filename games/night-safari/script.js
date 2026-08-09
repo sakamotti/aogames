@@ -111,8 +111,11 @@
   canvas.addEventListener('pointerup', (e) => active.delete(e.pointerId));
   canvas.addEventListener('pointercancel', (e) => active.delete(e.pointerId));
 
+  const POP_MS = 420;
+
   function foundAnimal(a) {
     a.found = true;
+    a.foundAt = performance.now();
     roundFound++;
     updateProgress();
     KidsApp.Sound.chime();
@@ -171,8 +174,11 @@
     });
 
     // Fog of darkness with a soft-edged hole cut wherever the light is.
+    // Left slightly translucent (not fully opaque) so hidden animals show
+    // through as a faint silhouette - a gentle hint of where to look,
+    // rather than a completely blank void to search blindly.
     ctx.save();
-    ctx.fillStyle = '#08081a';
+    ctx.fillStyle = 'rgba(8, 8, 26, 0.86)';
     ctx.fillRect(0, 0, stage.width, stage.height);
     if (lightOn && lightPos) {
       ctx.globalCompositeOperation = 'destination-out';
@@ -211,17 +217,34 @@
       ctx.fill();
     });
 
-    // Animals already found stay lit permanently, with a soft glow so the
-    // reward for finding one doesn't vanish the moment the light moves on.
-    ctx.font = emojiSize + 'px sans-serif';
+    // Animals already found stay lit permanently, with a bright layered
+    // glow (much stronger than the faint hidden hint) plus a quick pop-in
+    // bounce right when found, so the moment of discovery reads as a
+    // clear, unmistakable "found!" against the faint silhouettes still
+    // hiding elsewhere.
     hidden.forEach((a) => {
       if (!a.found) return;
+      const sinceFound = now - (a.foundAt || 0);
+      const popT = Math.min(1, sinceFound / POP_MS);
+      const ease = 1 - Math.pow(1 - popT, 3);
+      const scale = popT >= 1 ? 1 : 0.4 + ease * 0.85;
+
       ctx.save();
       ctx.beginPath();
-      ctx.arc(a.x, a.y, rr * 0.6, 0, Math.PI * 2);
-      ctx.fillStyle = 'rgba(255, 224, 130, 0.16)';
+      ctx.arc(a.x, a.y, rr * 0.75, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(255, 224, 130, 0.22)';
       ctx.fill();
-      ctx.fillText(a.emoji, a.x, a.y);
+      ctx.beginPath();
+      ctx.arc(a.x, a.y, rr * 0.45, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(255, 244, 200, 0.35)';
+      ctx.fill();
+
+      ctx.translate(a.x, a.y);
+      ctx.scale(scale, scale);
+      ctx.font = Math.round(emojiSize * 1.15) + 'px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(a.emoji, 0, 0);
       ctx.restore();
     });
 
