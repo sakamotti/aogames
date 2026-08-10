@@ -9,17 +9,33 @@
   const hintEl = document.getElementById('hint');
 
   const ANIMALS = [
-    { key: 'dog', emoji: '🐶', name: 'いぬ' },
-    { key: 'cat', emoji: '🐱', name: 'ねこ' },
-    { key: 'cow', emoji: '🐮', name: 'うし' },
-    { key: 'frog', emoji: '🐸', name: 'かえる' },
-    { key: 'pig', emoji: '🐷', name: 'ぶた' },
-    { key: 'chicken', emoji: '🐔', name: 'にわとり' },
-    { key: 'lion', emoji: '🦁', name: 'らいおん' },
-    { key: 'elephant', emoji: '🐘', name: 'ぞう' },
-    { key: 'sheep', emoji: '🐑', name: 'ひつじ' },
+    { key: 'dog', img: '../../icons/animals/dog.png', name: 'いぬ' },
+    { key: 'cat', img: '../../icons/animals/cat.png', name: 'ねこ' },
+    { key: 'cow', img: '../../icons/animals/cow.png', name: 'うし' },
+    { key: 'frog', img: '../../icons/animals/frog.png', name: 'かえる' },
+    { key: 'pig', img: '../../icons/animals/pig.png', name: 'ぶた' },
+    { key: 'chicken', img: '../../icons/animals/chicken.png', name: 'にわとり' },
+    { key: 'lion', img: '../../icons/animals/lion.png', name: 'らいおん' },
+    { key: 'elephant', img: '../../icons/animals/elephant.png', name: 'ぞう' },
+    { key: 'sheep', img: '../../icons/animals/sheep.png', name: 'ひつじ' },
   ];
   const ROUND_SIZE = 5;
+
+  const IMAGES = {};
+  function preloadImages() {
+    return Promise.all(
+      ANIMALS.map(
+        (a) =>
+          new Promise((resolve) => {
+            const img = new Image();
+            img.onload = resolve;
+            img.onerror = resolve;
+            img.src = a.img;
+            IMAGES[a.key] = img;
+          })
+      )
+    );
+  }
 
   let hidden = [];
   let stars = [];
@@ -58,7 +74,7 @@
         y = KidsApp.rand(margin, Math.max(margin + 1, stage.height - margin));
         tries++;
       } while (tries < 30 && placed.some((p) => Math.hypot(p.x - x, p.y - y) < minDist));
-      placed.push({ key: a.key, emoji: a.emoji, name: a.name, x, y, found: false });
+      placed.push({ key: a.key, name: a.name, x, y, found: false });
     });
     hidden = placed;
     roundFound = 0;
@@ -165,12 +181,10 @@
 
     // Hidden animals, drawn normally - the fog painted next hides them
     // everywhere except right under the light.
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.font = emojiSize + 'px sans-serif';
     hidden.forEach((a) => {
       if (a.found) return;
-      ctx.fillText(a.emoji, a.x, a.y);
+      const img = IMAGES[a.key];
+      if (img) ctx.drawImage(img, a.x - emojiSize / 2, a.y - emojiSize / 2, emojiSize, emojiSize);
     });
 
     // Fog of darkness with a soft-edged hole cut wherever the light is.
@@ -241,10 +255,9 @@
 
       ctx.translate(a.x, a.y);
       ctx.scale(scale, scale);
-      ctx.font = Math.round(emojiSize * 1.15) + 'px sans-serif';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText(a.emoji, 0, 0);
+      const foundSize = Math.round(emojiSize * 1.15);
+      const img = IMAGES[a.key];
+      if (img) ctx.drawImage(img, -foundSize / 2, -foundSize / 2, foundSize, foundSize);
       ctx.restore();
     });
 
@@ -253,6 +266,8 @@
     if (lightOn && lightPos) {
       ctx.save();
       ctx.font = Math.round(rr * 0.5) + 'px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
       ctx.fillText('🔦', lightPos.x, lightPos.y - rr - 16);
       ctx.restore();
     }
@@ -270,6 +285,8 @@
   }
 
   initStars();
-  placeAnimals();
-  requestAnimationFrame(frame);
+  preloadImages().then(() => {
+    placeAnimals();
+    requestAnimationFrame(frame);
+  });
 })();

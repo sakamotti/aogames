@@ -30,9 +30,13 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: min(11vw, 11vh);
     transition: transform 0.12s ease-out;
     border: 5px solid var(--card-color, var(--pink));
+  }
+  .animal-card__img {
+    width: min(13vw, 13vh);
+    height: min(13vw, 13vh);
+    object-fit: contain;
   }
   .animal-card.bounce { animation: animal-bounce 500ms ease-out; }
   @keyframes animal-bounce {
