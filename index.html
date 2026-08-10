@@ -11,8 +11,22 @@
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <link rel="stylesheet" href="shared/style.css">
 <style>
-  body { overflow-y: auto; position: static; min-height: 100dvh; }
+  /* The base stylesheet sets touch-action:none on body for the games (which
+     drive every interaction themselves and never scroll) - but the launcher
+     is a plain scrolling list once there are more tiles than fit on one
+     screen, so it needs touch scrolling back, or a phone with a small/old
+     screen simply can't reach the games below the fold at all. min-height
+     falls back to 100vh first for browsers that don't understand dvh. */
+  body {
+    overflow-y: auto;
+    position: static;
+    min-height: 100vh;
+    min-height: 100dvh;
+    touch-action: pan-y;
+    -webkit-overflow-scrolling: touch;
+  }
   .home-wrap {
+    min-height: 100vh;
     min-height: 100dvh;
     padding: calc(env(safe-area-inset-top, 0px) + 22px) 18px calc(env(safe-area-inset-bottom, 0px) + 28px);
     display: flex;
@@ -97,6 +111,29 @@
     color: var(--ink-soft);
     opacity: 0.6;
     text-align: center;
+  }
+
+  /* Smaller/older phones and landscape orientation (short viewport height)
+     both need the tiles to shrink so more fit per screen - scrolling works
+     now, but the fewer screenfuls it takes to see every game, the better. */
+  @media (max-width: 380px), (max-height: 480px) {
+    .home-wrap { padding-top: calc(env(safe-area-inset-top, 0px) + 12px); }
+    .home-title { font-size: clamp(20px, 5.5vw, 28px); margin-bottom: 2px; }
+    .home-sub { margin-bottom: 10px; }
+    .friends-row { gap: 10px; margin-bottom: 10px; }
+    .friends-row img { width: 36px; height: 36px; }
+    .game-grid { grid-template-columns: repeat(auto-fit, minmax(108px, 1fr)); gap: 10px; }
+    .game-tile { padding: 12px 8px 10px; }
+    .game-tile__emoji { font-size: clamp(28px, 8vw, 42px); margin-bottom: 6px; }
+    .game-tile__char { width: clamp(34px, 8vw, 48px); height: clamp(34px, 8vw, 48px); margin-bottom: 6px; }
+    .game-tile__label { font-size: clamp(11px, 2.8vw, 14px); }
+    .home-footer { margin-top: 16px; }
+  }
+
+  /* Landscape phones specifically: widen the grid's max-width so the extra
+     horizontal room is used for more columns instead of wasted side margin. */
+  @media (orientation: landscape) {
+    .game-grid { max-width: 1100px; }
   }
 </style>
 </head>
