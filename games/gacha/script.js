@@ -2,15 +2,15 @@
   KidsApp.initCommon();
 
   const ANIMALS = [
-    { key: 'dog', emoji: '🐶', name: 'いぬ' },
-    { key: 'cat', emoji: '🐱', name: 'ねこ' },
-    { key: 'cow', emoji: '🐮', name: 'うし' },
-    { key: 'frog', emoji: '🐸', name: 'かえる' },
-    { key: 'pig', emoji: '🐷', name: 'ぶた' },
-    { key: 'chicken', emoji: '🐔', name: 'にわとり' },
-    { key: 'lion', emoji: '🦁', name: 'らいおん' },
-    { key: 'elephant', emoji: '🐘', name: 'ぞう' },
-    { key: 'sheep', emoji: '🐑', name: 'ひつじ' },
+    { key: 'dog', img: '../../icons/animals/dog.png', name: 'いぬ' },
+    { key: 'cat', img: '../../icons/animals/cat.png', name: 'ねこ' },
+    { key: 'cow', img: '../../icons/animals/cow.png', name: 'うし' },
+    { key: 'frog', img: '../../icons/animals/frog.png', name: 'かえる' },
+    { key: 'pig', img: '../../icons/animals/pig.png', name: 'ぶた' },
+    { key: 'chicken', img: '../../icons/animals/chicken.png', name: 'にわとり' },
+    { key: 'lion', img: '../../icons/animals/lion.png', name: 'らいおん' },
+    { key: 'elephant', img: '../../icons/animals/elephant.png', name: 'ぞう' },
+    { key: 'sheep', img: '../../icons/animals/sheep.png', name: 'ひつじ' },
   ];
   const CAPSULE_COLORS = ['#ff6fa5', '#ffb84d', '#ffd23f', '#06d6a0', '#4ea8de', '#a78bfa', '#ff8a7a', '#2ec4b6'];
   const COLLECTION_KEY = 'kidsapp_gacha_collection';
@@ -32,6 +32,13 @@
     prizeNameText: document.getElementById('prizeNameText'),
   };
   const HERO_FLIGHT_MS = 650; // must match the .prize-hero.show transition duration in CSS
+
+  const prizeImg = document.createElement('img');
+  prizeImg.className = 'capsule__prize-img';
+  els.prizeEmoji.appendChild(prizeImg);
+  const heroImg = document.createElement('img');
+  heroImg.className = 'prize-hero__img';
+  els.prizeHero.appendChild(heroImg);
 
   // Decorative bobbing capsules inside the dome window.
   for (let i = 0; i < 10; i++) {
@@ -60,7 +67,7 @@
   ANIMALS.forEach((a) => {
     const slot = document.createElement('div');
     slot.className = 'collection-row__slot';
-    slot.textContent = a.emoji;
+    slot.innerHTML = `<img src="${a.img}" alt="">`;
     if (collection.has(a.key)) slot.classList.add('got');
     els.collectionRow.appendChild(slot);
     slotEls[a.key] = slot;
@@ -179,7 +186,7 @@
     topHalf.style.background = color;
 
     els.capsule.classList.remove('open', 'waiting');
-    els.prizeEmoji.textContent = prize.emoji;
+    prizeImg.src = prize.img;
     els.prizeLabel.textContent = '';
 
     requestAnimationFrame(() => els.capsule.classList.add('drop'));
@@ -217,21 +224,24 @@
     // Start the hero exactly at the capsule's on-screen spot/size (right
     // where the little in-capsule emoji already appears), then let it fly
     // up and grow into the big landed pose.
-    els.prizeHero.textContent = prize.emoji;
+    heroImg.src = prize.img;
     els.prizeHero.classList.remove('show', 'fade-out', 'settled');
     els.prizeHero.style.transition = 'none';
     els.prizeHero.style.left = startX + 'px';
     els.prizeHero.style.top = startY + 'px';
-    els.prizeHero.style.fontSize = '44px';
+    els.prizeHero.style.width = '44px';
+    els.prizeHero.style.height = '44px';
     void els.prizeHero.offsetWidth; // reflow so the next change is transitioned
     els.prizeHero.style.transition = '';
 
     setTimeout(() => {
       const landX = window.innerWidth / 2;
       const landY = window.innerHeight * 0.4;
+      const landSize = Math.round(Math.min(window.innerWidth * 0.42, 200));
       els.prizeHero.style.left = landX + 'px';
       els.prizeHero.style.top = landY + 'px';
-      els.prizeHero.style.fontSize = 'min(42vw, 200px)';
+      els.prizeHero.style.width = landSize + 'px';
+      els.prizeHero.style.height = landSize + 'px';
       els.prizeHero.classList.add('show');
       KidsApp.AnimalSounds[prize.key]();
     }, 350);

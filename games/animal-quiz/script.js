@@ -2,15 +2,15 @@
   KidsApp.initCommon();
 
   const ANIMALS = [
-    { emoji: '🐶', name: 'いぬ', sound: 'わんわん', sfx: 'dog' },
-    { emoji: '🐱', name: 'ねこ', sound: 'にゃーん', sfx: 'cat' },
-    { emoji: '🐮', name: 'うし', sound: 'もーう', sfx: 'cow' },
-    { emoji: '🐸', name: 'かえる', sound: 'げこげこ', sfx: 'frog' },
-    { emoji: '🐷', name: 'ぶた', sound: 'ぶーぶー', sfx: 'pig' },
-    { emoji: '🐔', name: 'にわとり', sound: 'こけこっこー', sfx: 'chicken' },
-    { emoji: '🦁', name: 'らいおん', sound: 'がおー', sfx: 'lion' },
-    { emoji: '🐘', name: 'ぞう', sound: 'ぱおーん', sfx: 'elephant' },
-    { emoji: '🐑', name: 'ひつじ', sound: 'めーめー', sfx: 'sheep' },
+    { img: '../../icons/animals/dog.png', name: 'いぬ', sound: 'わんわん', sfx: 'dog' },
+    { img: '../../icons/animals/cat.png', name: 'ねこ', sound: 'にゃーん', sfx: 'cat' },
+    { img: '../../icons/animals/cow.png', name: 'うし', sound: 'もーう', sfx: 'cow' },
+    { img: '../../icons/animals/frog.png', name: 'かえる', sound: 'げこげこ', sfx: 'frog' },
+    { img: '../../icons/animals/pig.png', name: 'ぶた', sound: 'ぶーぶー', sfx: 'pig' },
+    { img: '../../icons/animals/chicken.png', name: 'にわとり', sound: 'こけこっこー', sfx: 'chicken' },
+    { img: '../../icons/animals/lion.png', name: 'らいおん', sound: 'がおー', sfx: 'lion' },
+    { img: '../../icons/animals/elephant.png', name: 'ぞう', sound: 'ぱおーん', sfx: 'elephant' },
+    { img: '../../icons/animals/sheep.png', name: 'ひつじ', sound: 'めーめー', sfx: 'sheep' },
   ];
 
   const host = KidsApp.choice(KidsApp.CHARACTERS);
@@ -41,7 +41,7 @@
     options.forEach((animal) => {
       const card = document.createElement('button');
       card.className = 'option-card';
-      card.textContent = animal.emoji;
+      card.innerHTML = `<img class="option-card__img" src="${animal.img}" alt="">`;
       card.addEventListener('pointerdown', () => onPick(animal, card));
       optionsEl.appendChild(card);
     });
