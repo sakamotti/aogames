@@ -22,6 +22,29 @@ function fillCircleOutlined(cv, cx, cy, r, fillColor, outlineColor, outlineWidth
   fillCircle(cv, cx, cy, r, fillColor);
 }
 
+// Small standing "chibi" body (big head, compact torso/arms/legs) drawn
+// beneath the head so every mascot reads consistently as a full character
+// instead of some being face-only portraits and others (like the pet-friends
+// animals) having bodies. Drawn before the head/ears/face so the head
+// naturally overlaps and hides the neck seam.
+function drawStandingBody(cv, cx, headCy, headR, bodyColor, outlineColor, footColor) {
+  const neckY = headCy + headR * 0.72;
+  const bodyRx = headR * 0.92;
+  const bodyRy = headR * 0.74;
+  const bodyCy = neckY + bodyRy * 0.65;
+
+  fillEllipse(cv, cx - bodyRx * 0.5, bodyCy + bodyRy * 0.86, headR * 0.32, headR * 0.2, 0.08, footColor);
+  fillEllipse(cv, cx + bodyRx * 0.5, bodyCy + bodyRy * 0.86, headR * 0.32, headR * 0.2, -0.08, footColor);
+
+  fillEllipse(cv, cx - bodyRx * 0.98, bodyCy - bodyRy * 0.05, headR * 0.28, headR * 0.5, 0.45, bodyColor);
+  fillEllipse(cv, cx + bodyRx * 0.98, bodyCy - bodyRy * 0.05, headR * 0.28, headR * 0.5, -0.45, bodyColor);
+
+  fillEllipse(cv, cx, bodyCy, bodyRx + headR * 0.035, bodyRy + headR * 0.035, 0, outlineColor);
+  fillEllipse(cv, cx, bodyCy, bodyRx, bodyRy, 0, bodyColor);
+
+  return { bodyCy, bodyRx, bodyRy };
+}
+
 function drawFace(cv, cx, cy, r, { blush = '#FFB0C8', mouth = '#FF6FA5' } = {}) {
   const eyeY = cy - r * 0.02;
   const eyeDX = r * 0.32;
@@ -36,11 +59,13 @@ function drawFace(cv, cx, cy, r, { blush = '#FFB0C8', mouth = '#FF6FA5' } = {}) 
 
 function drawBear(size) {
   const cv = makeCanvas(size, size);
-  const cx = size * 0.5, cy = size * 0.56, r = size * 0.33;
+  const cx = size * 0.5, cy = size * 0.4, r = size * 0.27;
   const fur = '#E3A76F';
   const furDark = '#C98B57';
   const outline = '#B87A45';
   const snoutColor = '#FBEBD8';
+
+  drawStandingBody(cv, cx, cy, r, fur, outline, furDark);
 
   // ears (behind head, positioned so most of the circle peeks past the head edge)
   fillCircleOutlined(cv, cx - r * 0.82, cy - r * 0.68, r * 0.34, fur, outline, r * 0.03);
@@ -61,10 +86,12 @@ function drawBear(size) {
 
 function drawCat(size) {
   const cv = makeCanvas(size, size);
-  const cx = size * 0.5, cy = size * 0.56, r = size * 0.33;
+  const cx = size * 0.5, cy = size * 0.4, r = size * 0.27;
   const fur = '#FFEFD9';
   const outline = '#E9C9A0';
   const patch = '#F4A94F';
+
+  drawStandingBody(cv, cx, cy, r, fur, outline, outline);
 
   // ears (triangles, mostly peeking above the head edge)
   fillPolygon(cv, earTriangle(cx, cy, r, -125, 0.8, 0.62, 0.62), outline);
@@ -108,10 +135,12 @@ function drawCat(size) {
 
 function drawRabbit(size) {
   const cv = makeCanvas(size, size);
-  const cx = size * 0.5, cy = size * 0.6, r = size * 0.32;
+  const cx = size * 0.5, cy = size * 0.4, r = size * 0.27;
   const fur = '#FFF8FA';
   const outline = '#F3C9D8';
   const inner = '#FFC2D6';
+
+  drawStandingBody(cv, cx, cy, r, fur, outline, inner);
 
   // ears (long ellipses, behind head)
   fillEllipse(cv, cx - r * 0.42, cy - r * 1.02, r * 0.28, r * 0.34, -0.18, outline);
