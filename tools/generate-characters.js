@@ -22,22 +22,24 @@ function fillCircleOutlined(cv, cx, cy, r, fillColor, outlineColor, outlineWidth
   fillCircle(cv, cx, cy, r, fillColor);
 }
 
-// Small standing "chibi" body (big head, compact torso/arms/legs) drawn
-// beneath the head so every mascot reads consistently as a full character
-// instead of some being face-only portraits and others (like the pet-friends
-// animals) having bodies. Drawn before the head/ears/face so the head
-// naturally overlaps and hides the neck seam.
+// A small standing body drawn beneath the head so every mascot reads as a
+// full character instead of some being face-only portraits and others
+// (like the pet-friends animals) having bodies. Kept subordinate to the
+// head - close to the original head-only proportions - rather than a big
+// "chibi" torso, per feedback that an equally-prominent body read as too
+// deformed/toy-like. Drawn before the head/ears/face so the head naturally
+// overlaps and hides the neck seam.
 function drawStandingBody(cv, cx, headCy, headR, bodyColor, outlineColor, footColor) {
-  const neckY = headCy + headR * 0.72;
-  const bodyRx = headR * 0.92;
-  const bodyRy = headR * 0.74;
-  const bodyCy = neckY + bodyRy * 0.65;
+  const neckY = headCy + headR * 0.8;
+  const bodyRx = headR * 0.68;
+  const bodyRy = headR * 0.5;
+  const bodyCy = neckY + bodyRy * 0.55;
 
-  fillEllipse(cv, cx - bodyRx * 0.5, bodyCy + bodyRy * 0.86, headR * 0.32, headR * 0.2, 0.08, footColor);
-  fillEllipse(cv, cx + bodyRx * 0.5, bodyCy + bodyRy * 0.86, headR * 0.32, headR * 0.2, -0.08, footColor);
+  fillEllipse(cv, cx - bodyRx * 0.5, bodyCy + bodyRy * 0.86, headR * 0.24, headR * 0.15, 0.08, footColor);
+  fillEllipse(cv, cx + bodyRx * 0.5, bodyCy + bodyRy * 0.86, headR * 0.24, headR * 0.15, -0.08, footColor);
 
-  fillEllipse(cv, cx - bodyRx * 0.98, bodyCy - bodyRy * 0.05, headR * 0.28, headR * 0.5, 0.45, bodyColor);
-  fillEllipse(cv, cx + bodyRx * 0.98, bodyCy - bodyRy * 0.05, headR * 0.28, headR * 0.5, -0.45, bodyColor);
+  fillEllipse(cv, cx - bodyRx * 0.98, bodyCy - bodyRy * 0.05, headR * 0.2, headR * 0.36, 0.4, bodyColor);
+  fillEllipse(cv, cx + bodyRx * 0.98, bodyCy - bodyRy * 0.05, headR * 0.2, headR * 0.36, -0.4, bodyColor);
 
   fillEllipse(cv, cx, bodyCy, bodyRx + headR * 0.035, bodyRy + headR * 0.035, 0, outlineColor);
   fillEllipse(cv, cx, bodyCy, bodyRx, bodyRy, 0, bodyColor);
@@ -59,7 +61,7 @@ function drawFace(cv, cx, cy, r, { blush = '#FFB0C8', mouth = '#FF6FA5' } = {}) 
 
 function drawBear(size) {
   const cv = makeCanvas(size, size);
-  const cx = size * 0.5, cy = size * 0.4, r = size * 0.27;
+  const cx = size * 0.5, cy = size * 0.44, r = size * 0.31;
   const fur = '#E3A76F';
   const furDark = '#C98B57';
   const outline = '#B87A45';
@@ -86,7 +88,7 @@ function drawBear(size) {
 
 function drawCat(size) {
   const cv = makeCanvas(size, size);
-  const cx = size * 0.5, cy = size * 0.4, r = size * 0.27;
+  const cx = size * 0.5, cy = size * 0.44, r = size * 0.31;
   const fur = '#FFEFD9';
   const outline = '#E9C9A0';
   const patch = '#F4A94F';
@@ -135,7 +137,7 @@ function drawCat(size) {
 
 function drawRabbit(size) {
   const cv = makeCanvas(size, size);
-  const cx = size * 0.5, cy = size * 0.4, r = size * 0.27;
+  const cx = size * 0.5, cy = size * 0.44, r = size * 0.31;
   const fur = '#FFF8FA';
   const outline = '#F3C9D8';
   const inner = '#FFC2D6';
