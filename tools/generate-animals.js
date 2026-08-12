@@ -42,16 +42,20 @@ function drawBlush(cv, cx, cy, r, color = '#FFB0C8') {
 // used for the mascot cast (tools/generate-characters.js) - the mascots are
 // guide characters that make sense standing like a person, but the animal
 // roster should look like actual animals (a sheep standing on four legs,
-// not a sheep standing on two). Legs are drawn first so the torso overlaps
-// their tops and only the lower "foot" ends peek out below the body.
+// not a sheep standing on two). Proportioned so the head no longer
+// dominates the whole figure - still a deformed/cute style, but closer to
+// a head:body ratio a real animal could plausibly have, per feedback that
+// the earlier huge-head/tiny-body look read as a toy rather than a
+// creature. Legs are drawn first so the torso overlaps their tops and only
+// the lower "foot" ends peek out below the body.
 function drawQuadrupedBody(cv, cx, headCy, headR, bodyColor, outlineColor, footColor) {
-  const neckY = headCy + headR * 0.76;
-  const bodyRx = headR * 1.05;
-  const bodyRy = headR * 0.5;
-  const bodyCy = neckY + bodyRy * 0.55;
+  const neckY = headCy + headR * 0.7;
+  const bodyRx = headR * 1.6;
+  const bodyRy = headR * 0.85;
+  const bodyCy = neckY + bodyRy * 0.5;
 
-  const legRx = headR * 0.15;
-  const legRy = headR * 0.34;
+  const legRx = headR * 0.22;
+  const legRy = headR * 0.65;
   const legCy = bodyCy + bodyRy * 0.55;
   [-0.7, -0.24, 0.24, 0.7].forEach((fx) => {
     fillEllipse(cv, cx + fx * bodyRx, legCy, legRx, legRy, 0, footColor);
@@ -65,7 +69,7 @@ function drawQuadrupedBody(cv, cx, headCy, headR, bodyColor, outlineColor, footC
 
 function drawDog(size) {
   const cv = makeCanvas(size, size);
-  const cx = size * 0.5, cy = size * 0.44, r = size * 0.31;
+  const cx = size * 0.5, cy = size * 0.35, r = size * 0.24;
   const fur = '#E8B372', outline = '#C9925A', earColor = '#C9925A', snoutColor = '#FBEBD8';
 
   drawQuadrupedBody(cv, cx, cy, r, fur, outline, outline);
@@ -86,7 +90,7 @@ function drawDog(size) {
 
 function drawCat(size) {
   const cv = makeCanvas(size, size);
-  const cx = size * 0.5, cy = size * 0.44, r = size * 0.31;
+  const cx = size * 0.5, cy = size * 0.35, r = size * 0.24;
   const fur = '#FFEFD9', outline = '#E9C9A0', patch = '#F4A94F';
 
   drawQuadrupedBody(cv, cx, cy, r, fur, outline, outline);
@@ -118,7 +122,7 @@ function drawCat(size) {
 
 function drawCow(size) {
   const cv = makeCanvas(size, size);
-  const cx = size * 0.5, cy = size * 0.44, r = size * 0.31;
+  const cx = size * 0.5, cy = size * 0.35, r = size * 0.24;
   const fur = '#FDFBF5', outline = '#D8D0C0', patch = '#6B5B4A', snoutColor = '#FFC7D6', hornColor = '#F0E4D0';
 
   drawQuadrupedBody(cv, cx, cy, r, fur, outline, outline);
@@ -143,7 +147,7 @@ function drawCow(size) {
 
 function drawFrog(size) {
   const cv = makeCanvas(size, size);
-  const cx = size * 0.5, cy = size * 0.46, r = size * 0.31;
+  const cx = size * 0.5, cy = size * 0.37, r = size * 0.24;
   const skin = '#8BC34A', outline = '#5E8F2E', belly = '#DFF3BC';
 
   drawQuadrupedBody(cv, cx, cy, r, skin, outline, outline);
@@ -165,7 +169,7 @@ function drawFrog(size) {
 
 function drawPig(size) {
   const cv = makeCanvas(size, size);
-  const cx = size * 0.5, cy = size * 0.44, r = size * 0.31;
+  const cx = size * 0.5, cy = size * 0.35, r = size * 0.24;
   const fur = '#FFB3C6', outline = '#E8899E', snoutColor = '#FF8FA8';
 
   drawQuadrupedBody(cv, cx, cy, r, fur, outline, outline);
@@ -187,7 +191,7 @@ function drawPig(size) {
 
 function drawChicken(size) {
   const cv = makeCanvas(size, size);
-  const cx = size * 0.5, cy = size * 0.44, r = size * 0.31;
+  const cx = size * 0.5, cy = size * 0.35, r = size * 0.24;
   const feather = '#FFF6E6', outline = '#E8DCC0', comb = '#FF6B5B', beak = '#F4A94F';
 
   drawQuadrupedBody(cv, cx, cy, r, feather, outline, beak);
@@ -204,7 +208,7 @@ function drawChicken(size) {
 
 function drawLion(size) {
   const cv = makeCanvas(size, size);
-  const cx = size * 0.5, cy = size * 0.44, r = size * 0.31;
+  const cx = size * 0.5, cy = size * 0.35, r = size * 0.24;
   const fur = '#F2B84B', outline = '#D89A2E', mane = '#E08A2E', snoutColor = '#FBEBD8';
 
   drawQuadrupedBody(cv, cx, cy, r, fur, outline, outline);
@@ -229,7 +233,7 @@ function drawLion(size) {
 
 function drawElephant(size) {
   const cv = makeCanvas(size, size);
-  const cx = size * 0.5, cy = size * 0.44, r = size * 0.31;
+  const cx = size * 0.5, cy = size * 0.35, r = size * 0.24;
   const fur = '#C3CAD3', outline = '#9AA5B0';
 
   drawQuadrupedBody(cv, cx, cy, r, fur, outline, outline);
@@ -256,7 +260,7 @@ function drawElephant(size) {
 
 function drawSheep(size) {
   const cv = makeCanvas(size, size);
-  const cx = size * 0.5, cy = size * 0.44, r = size * 0.31;
+  const cx = size * 0.5, cy = size * 0.35, r = size * 0.24;
   const wool = '#FDFBF5', woolOutline = '#E4DED0', face = '#8D7B6B', faceOutline = '#6E5E50';
 
   drawQuadrupedBody(cv, cx, cy, r, wool, woolOutline, faceOutline);
