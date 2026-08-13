@@ -217,9 +217,11 @@
   }
 
   @keyframes pet-eat {
-    from { transform: rotate(-1deg) translateY(0) scaleY(1); }
-    to { transform: rotate(1deg) translateY(5px) scaleY(.97); }
+    from { transform: scaleX(var(--face-x, 1)) rotate(-1deg) translateY(0) scaleY(1); }
+    to { transform: scaleX(var(--face-x, 1)) rotate(1deg) translateY(5px) scaleY(.97); }
   }
+
+  .pet-actor.face-right { --face-x: -1; }
 
   @keyframes pet-drink {
     from { transform: rotate(-1deg) translateY(0); }
@@ -387,6 +389,7 @@
     .pet-actor.brushing .pet-image,
     .pet-actor.sleeping .pet-image,
     .pet-actor.bounce .pet-image { animation-duration: 1ms; animation-iteration-count: 1; }
+    .pet-actor.face-right .pet-image { transform: scaleX(-1); }
   }
 </style>
 </head>
