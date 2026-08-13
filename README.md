@@ -8,7 +8,7 @@
 ## キャラクターについて
 
 アンパンマンやハローキティ、スヌーピーのような有名キャラクターは、それぞれの著作権者(やなせたかし/フレーベル館など、サンリオ、Peanuts/Charles M. Schulz)が権利を持つため、似せて描いて公開すると著作権・商標の侵害になります。無料・非商用のアプリであっても使用できません。
-そのため本アプリでは、**このアプリのためだけに描き起こしたオリジナルキャラクター3体**(`tools/generate-characters.js`でコード生成、外部素材0点)を採用しています。
+そのため本アプリでは、**このアプリのためだけに制作したオリジナルキャラクター3体**を採用しています。動物9種と案内役3体は、子どもが種類を見分けやすい自然な体つきと、やさしい立体感を持つオリジナルのAI支援イラストです。第三者の既存キャラクターは使用していません。
 
 | キャラクター | 名前 | 登場するゲーム |
 |---|---|---|
@@ -117,8 +117,9 @@ python3 -m http.server 8000
 index.html          # ホーム画面(ゲーム選択)
 manifest.json        # PWAマニフェスト
 sw.js                 # オフラインキャッシュ用 Service Worker
-icons/                # アプリアイコン(コード生成、tools/generate-icons.js参照)
-  characters/          # オリジナルマスコット3体のPNG(tools/generate-characters.js参照)
+icons/                # アプリアイコンとゲーム用画像
+  animals/             # 動物9種のオリジナルPNG
+  characters/          # オリジナルマスコット3体のPNG
 shared/
   style.css          # 共通デザインシステム(4〜6歳向けUIルール)
   app.js             # 共通ロジック(効果音合成/音声読み上げ/紙吹雪/ホームボタン/マスコット吹き出し/SW登録)
@@ -127,9 +128,8 @@ games/
     index.html
     script.js
 tools/
-  lib/pixel-canvas.js    # 外部ライブラリ無しのPNG描画エンジン(全生成スクリプトが共有)
+  lib/pixel-canvas.js    # 外部ライブラリ無しのPNG描画エンジン
   generate-icons.js      # アプリアイコンを生成
-  generate-characters.js # マスコット3体を生成
 ```
 
 ### 新しいゲームの追加方法
