@@ -47,6 +47,60 @@
     localStorage.setItem(MUTE_KEY, v ? '1' : '0');
   }
 
+  // Small, local-only learning profile. Games use this to start gently and
+  // unlock harder rounds after repeated success. No names, scores, or personal
+  // information are stored, and nothing leaves the device.
+  const LEARNING_KEY = 'kidsapp_learning_v1';
+  function readLearning() {
+    try {
+      return JSON.parse(localStorage.getItem(LEARNING_KEY) || '{}');
+    } catch (_) {
+      return {};
+    }
+  }
+  function writeLearning(data) {
+    try {
+      localStorage.setItem(LEARNING_KEY, JSON.stringify(data));
+    } catch (_) {}
+  }
+  function createAdaptive(id, levelCount, opts = {}) {
+    const promoteAfter = opts.promoteAfter || 3;
+    const easeAfter = opts.easeAfter || 2;
+    const saved = readLearning()[id] || {};
+    let level = Math.max(0, Math.min(levelCount - 1, Number(saved.level) || 0));
+    let successes = Number(saved.successes) || 0;
+    let struggles = Number(saved.struggles) || 0;
+
+    function save() {
+      const all = readLearning();
+      all[id] = { level, successes, struggles };
+      writeLearning(all);
+    }
+    function record(ok) {
+      if (ok) {
+        successes++;
+        struggles = 0;
+        if (successes >= promoteAfter && level < levelCount - 1) {
+          level++;
+          successes = 0;
+        }
+      } else {
+        struggles++;
+        successes = 0;
+        if (struggles >= easeAfter && level > 0) {
+          level--;
+          struggles = 0;
+        }
+      }
+      save();
+      return level;
+    }
+    return {
+      get level() { return level; },
+      record,
+    };
+  }
+
   function playTone({ freq = 440, duration = 0.25, type = 'sine', gain = 0.2, glideTo = null, delay = 0 } = {}) {
     if (isMuted()) return;
     const audio = getCtx();
@@ -716,6 +770,38 @@
     return { el: wrap, setText };
   }
 
+  // A gentle pause after a long continuous play session. It is deliberately
+  // dismissible: this is a cue for a parent and child, never a punishment.
+  function initBreakReminder() {
+    const SESSION_KEY = 'kidsapp_session_started';
+    const REMIND_MS = 15 * 60 * 1000;
+    let started = Number(sessionStorage.getItem(SESSION_KEY));
+    if (!started || Date.now() - started > 2 * 60 * 60 * 1000) {
+      started = Date.now();
+      sessionStorage.setItem(SESSION_KEY, String(started));
+    }
+    const remaining = Math.max(1000, REMIND_MS - (Date.now() - started));
+    setTimeout(() => {
+      if (document.querySelector('.break-reminder')) return;
+      const overlay = document.createElement('div');
+      overlay.className = 'break-reminder';
+      overlay.setAttribute('role', 'dialog');
+      overlay.setAttribute('aria-label', '休憩のお知らせ');
+      overlay.innerHTML =
+        '<div class="break-reminder__panel">' +
+          '<div class="break-reminder__mascot">🌿</div>' +
+          '<div class="break-reminder__text">すこし めを やすめよう</div>' +
+          '<button class="break-reminder__continue" type="button">もうすこし あそぶ</button>' +
+        '</div>';
+      document.body.appendChild(overlay);
+      KidsApp.speak('すこし めを やすめよう');
+      overlay.querySelector('button').addEventListener('click', () => {
+        sessionStorage.setItem(SESSION_KEY, String(Date.now()));
+        overlay.remove();
+      });
+    }, remaining);
+  }
+
   function initCommon(opts = {}) {
     document.addEventListener(
       'pointerdown',
@@ -730,6 +816,7 @@
     }
     initMuteButton();
     registerServiceWorker();
+    initBreakReminder();
   }
 
   global.KidsApp = {
@@ -749,6 +836,7 @@
     choice,
     CHARACTERS,
     mascotBubble,
+    createAdaptive,
     BOTTOM_GAP: BOTTOM_GAP_PX,
     AnimalSounds,
     getServiceWorkerVersion,

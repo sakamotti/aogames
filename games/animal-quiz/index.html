@@ -18,7 +18,17 @@
     align-items: center;
     padding: calc(var(--safe-top) + 70px) 16px calc(var(--safe-bottom) + var(--safe-bottom-gap));
   }
-  .mascot-row { margin-bottom: 22px; max-width: 92vw; }
+  .mascot-row { margin-bottom: 10px; max-width: 92vw; }
+  .repeat-sound {
+    width: 58px;
+    height: 58px;
+    flex: 0 0 58px;
+    margin-bottom: 12px;
+    border-radius: 50%;
+    background: var(--yellow);
+    box-shadow: var(--shadow-soft);
+    font-size: 28px;
+  }
   .options {
     display: grid;
     grid-template-columns: repeat(2, minmax(120px, 1fr));
@@ -48,6 +58,7 @@
 <body>
   <div class="quiz-wrap">
     <div id="mascotHost"></div>
+    <button class="repeat-sound" id="repeatSound" type="button" aria-label="鳴き声をもう一度聞く">🔊</button>
     <div class="options" id="options"></div>
   </div>
   <script src="../../shared/app.js"></script>

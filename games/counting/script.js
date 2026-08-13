@@ -16,6 +16,8 @@
   let target = 0;
   let currentEmoji = OBJECT_POOL[0];
   let locked = false;
+  const MAX_COUNTS = [3, 5, 10];
+  const adaptive = KidsApp.createAdaptive('counting', MAX_COUNTS.length);
 
   function shuffle(arr) {
     return arr
@@ -42,6 +44,7 @@
       span.textContent = emoji;
       span.style.left = x + 'px';
       span.style.top = y + 'px';
+      span.dataset.order = String(i + 1);
       area.appendChild(span);
     }
   }
@@ -58,7 +61,7 @@
 
   function askQuestion() {
     locked = false;
-    target = Math.floor(KidsApp.rand(1, 11));
+    target = Math.floor(KidsApp.rand(1, MAX_COUNTS[adaptive.level] + 1));
     currentEmoji = KidsApp.choice(OBJECT_POOL);
     layoutObjects(target, currentEmoji);
 
@@ -84,16 +87,24 @@
         if (c !== card) c.classList.add('choice-dim');
       });
       KidsApp.Sound.success();
+      adaptive.record(true);
       const rect = card.getBoundingClientRect();
       KidsApp.confettiBurst(document.body, rect.left + rect.width / 2, rect.top + rect.height / 2, 16);
-      mascot.setText(`せいかい！ ${target}こ だったね！`);
-      KidsApp.speak(`せいかい！ ${target}こ だったね！`);
-      setTimeout(askQuestion, 2500);
+      mascot.setText(`いっしょに かぞえよう！ ${target}こ だね！`);
+      const objects = [...area.children];
+      objects.forEach((object, i) => {
+        setTimeout(() => object.classList.add('counted'), i * 180);
+        setTimeout(() => object.classList.remove('counted'), i * 180 + 300);
+      });
+      const spokenCount = Array.from({ length: target }, (_, i) => i + 1).join('、');
+      KidsApp.speak(`${spokenCount}。${target}こ だったね！`);
+      setTimeout(askQuestion, target * 180 + 1600);
     } else {
       card.classList.remove('shake-x');
       void card.offsetWidth;
       card.classList.add('shake-x');
       KidsApp.Sound.tap();
+      adaptive.record(false);
     }
   }
 

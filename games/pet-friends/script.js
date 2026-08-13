@@ -14,6 +14,13 @@
     },
   };
 
+  const CARE = {
+    food: { icon: '🍽️', need: 'おなか すいた！', doing: 'もぐもぐ', voice: 'ごはんが ほしいよ', className: 'eating' },
+    water: { icon: '💧', need: 'のど かわいた！', doing: 'ごくごく', voice: 'おみずが ほしいよ', className: 'drinking' },
+    brush: { icon: '🪮', need: 'けを ととのえたい！', doing: 'きれい きれい', voice: 'ブラシを してほしいよ', className: 'brushing' },
+    sleep: { icon: '💤', need: 'ねむたいな', doing: 'すやすや', voice: 'ねんね したいよ', className: 'sleeping' },
+  };
+
   const els = {
     btnCat: document.getElementById('btnCat'),
     btnDog: document.getElementById('btnDog'),
@@ -25,7 +32,7 @@
     hintBubble: document.getElementById('hintBubble'),
     foodSpot: document.getElementById('foodSpot'),
     foodIcon: document.getElementById('foodIcon'),
-    treatBowl: document.getElementById('treatBowl'),
+    careButtons: [...document.querySelectorAll('[data-care]')],
     treatIcon: document.getElementById('treatIcon'),
     rubGlow: document.getElementById('rubGlow'),
   };
@@ -38,6 +45,7 @@
   let particleDistance = 0;
   let lastHappySoundAt = 0;
   let feeding = false;
+  const currentNeed = { cat: 'food', dog: 'water' };
   let idleTimer = null;
 
   for (let i = 0; i < 5; i++) {
@@ -62,6 +70,22 @@
     els.hintBubble.classList.remove('pop');
     void els.hintBubble.offsetWidth;
     els.hintBubble.classList.add('pop');
+  }
+
+  function showNeed(speak = false) {
+    const care = CARE[currentNeed[species]];
+    showHint(care.need);
+    if (speak) KidsApp.speak(`${currentPet().name}は ${care.voice}`);
+  }
+
+  function setCareButtonsDisabled(disabled) {
+    els.careButtons.forEach((button) => { button.disabled = disabled; });
+  }
+
+  function advanceNeed() {
+    const choices = Object.keys(CARE).filter((key) => key !== currentNeed[species]);
+    currentNeed[species] = KidsApp.choice(choices);
+    setTimeout(() => showNeed(true), 900);
   }
 
   function spawnHeart(x, y) {
@@ -181,7 +205,7 @@
     if (feeding) return;
     endPetting();
     feeding = true;
-    els.treatBowl.disabled = true;
+    setCareButtonsDisabled(true);
     const side = Math.random() < .5 ? -1 : 1;
     const available = Math.min(96, Math.max(58, els.petArea.clientWidth * .19));
     const offset = side * available;
@@ -208,6 +232,7 @@
         els.foodSpot.classList.add('eaten');
         spawnHeart(foodRect.left + foodRect.width / 2, foodRect.top);
         awardAffection();
+        advanceNeed();
 
         setTimeout(() => {
           els.petActor.classList.remove('eating');
@@ -216,7 +241,7 @@
           setTimeout(() => {
             els.petActor.classList.remove('walking');
             els.foodSpot.classList.remove('shown', 'eaten');
-            els.treatBowl.disabled = false;
+            setCareButtonsDisabled(false);
             feeding = false;
           }, WALK_MS);
         }, 560);
@@ -224,7 +249,50 @@
     }, WALK_MS);
   }
 
-  els.treatBowl.addEventListener('pointerdown', feed);
+  function care(action) {
+    if (feeding) return;
+    if (action !== currentNeed[species]) {
+      showNeed(true);
+      KidsApp.Sound.tap();
+      return;
+    }
+    if (action === 'food') {
+      feed();
+      return;
+    }
+
+    endPetting();
+    feeding = true;
+    setCareButtonsDisabled(true);
+    const careInfo = CARE[action];
+    els.foodIcon.textContent = careInfo.icon;
+    els.foodSpot.style.left = '50%';
+    els.foodSpot.classList.remove('eaten');
+    void els.foodSpot.offsetWidth;
+    els.foodSpot.classList.add('shown');
+    els.petActor.classList.add('caring', careInfo.className);
+    showHint(careInfo.doing);
+    KidsApp.Sound.chime();
+
+    setTimeout(() => {
+      const rect = els.petImage.getBoundingClientRect();
+      spawnHeart(rect.left + rect.width / 2, rect.top + rect.height * .25);
+      els.foodSpot.classList.add('eaten');
+      awardAffection();
+      advanceNeed();
+      setTimeout(() => {
+        els.petActor.classList.remove('caring', careInfo.className);
+        els.foodSpot.classList.remove('shown', 'eaten');
+        els.foodIcon.textContent = currentPet().treat;
+        setCareButtonsDisabled(false);
+        feeding = false;
+      }, 760);
+    }, action === 'sleep' ? 1500 : 1050);
+  }
+
+  els.careButtons.forEach((button) => {
+    button.addEventListener('pointerdown', () => care(button.dataset.care));
+  });
 
   function setSpecies(next) {
     if (feeding || next === species) return;
@@ -238,15 +306,23 @@
     els.foodIcon.textContent = pet.treat;
     els.petActor.setAttribute('aria-label', `${pet.name}をなでる`);
     els.petArea.setAttribute('aria-label', `${pet.name}をなでる場所`);
-    els.treatBowl.setAttribute('aria-label', `${pet.name}にごはんをあげる`);
+    els.careButtons.forEach((button) => {
+      const labels = {
+        food: `${pet.name}にごはんをあげる`,
+        water: `${pet.name}におみずをあげる`,
+        brush: `${pet.name}をブラシする`,
+        sleep: `${pet.name}をねかせる`,
+      };
+      button.setAttribute('aria-label', labels[button.dataset.care]);
+    });
     els.btnCat.classList.toggle('active', next === 'cat');
     els.btnDog.classList.toggle('active', next === 'dog');
     els.btnCat.setAttribute('aria-pressed', String(next === 'cat'));
     els.btnDog.setAttribute('aria-pressed', String(next === 'dog'));
     renderAffection();
-    showHint('なでなで してね');
+    showNeed();
     KidsApp.Sound.tap();
-    KidsApp.speak(pet.petVoice);
+    KidsApp.speak(`${pet.petVoice} ${CARE[currentNeed[species]].voice}`);
   }
 
   els.btnCat.addEventListener('pointerdown', () => setSpecies('cat'));
@@ -257,7 +333,7 @@
     idleTimer = setTimeout(() => {
       if (activePointer === null && !feeding) {
         els.petActor.classList.add('bounce');
-        showHint(KidsApp.choice(['なでて！', 'あそぼう！']));
+        showNeed();
         KidsApp.AnimalSounds[currentPet().sfx]();
         setTimeout(() => els.petActor.classList.remove('bounce'), 680);
       }
@@ -266,5 +342,6 @@
   }
 
   renderAffection();
+  showNeed();
   scheduleIdle();
 })();

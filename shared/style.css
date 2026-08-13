@@ -92,6 +92,36 @@ button {
   -webkit-tap-highlight-color: transparent;
 }
 
+.break-reminder {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(74, 59, 120, 0.28);
+}
+.break-reminder__panel {
+  width: min(360px, 90vw);
+  padding: 28px 22px;
+  border-radius: var(--radius-lg);
+  background: var(--white);
+  box-shadow: var(--shadow-soft);
+  text-align: center;
+}
+.break-reminder__mascot { font-size: 54px; }
+.break-reminder__text { margin: 12px 0 20px; font-size: 22px; }
+.break-reminder__continue {
+  min-height: 58px;
+  padding: 10px 20px;
+  border-radius: 999px;
+  background: var(--green);
+  color: var(--ink);
+  box-shadow: var(--shadow-soft);
+  font-size: 16px;
+}
+
 .stage {
   position: fixed;
   inset: 0;

@@ -31,6 +31,11 @@
     transform: translate(-50%, -50%);
     font-size: min(11vw, 12vh);
     filter: drop-shadow(0 4px 6px rgba(74,59,120,0.2));
+    transition: transform 160ms ease, filter 160ms ease;
+  }
+  .counting-area span.counted {
+    transform: translate(-50%, -50%) scale(1.28);
+    filter: drop-shadow(0 0 12px var(--yellow));
   }
   .number-options {
     display: grid;

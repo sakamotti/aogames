@@ -4,22 +4,31 @@
   const board = document.getElementById('board');
 
   const SHAPES = [
-    { id: 'circle', color: '#ff6fa5' },
-    { id: 'square', color: '#2ec4b6' },
-    { id: 'triangle', color: '#ffd23f' },
-    { id: 'star', color: '#a78bfa' },
-    { id: 'hexagon', color: '#4ea8de' },
-    { id: 'heart', color: '#ff8a7a' },
+    { id: 'circle', name: 'まる', color: '#ff6fa5' },
+    { id: 'square', name: 'しかく', color: '#2ec4b6' },
+    { id: 'triangle', name: 'さんかく', color: '#ffd23f' },
+    { id: 'star', name: 'ほし', color: '#a78bfa' },
+    { id: 'heart', name: 'はーと', color: '#ff8a7a' },
+    { id: 'hexagon', name: 'ろっかくけい', color: '#4ea8de' },
   ];
-  // Two rows of three so six shapes still get generous tap targets.
-  const HOLE_SLOTS = [
-    { fx: 0.2, fy: 0.22 }, { fx: 0.5, fy: 0.22 }, { fx: 0.8, fy: 0.22 },
-    { fx: 0.2, fy: 0.44 }, { fx: 0.5, fy: 0.44 }, { fx: 0.8, fy: 0.44 },
-  ];
-  const PIECE_SLOTS = [
-    { fx: 0.2, fy: 0.68 }, { fx: 0.5, fy: 0.68 }, { fx: 0.8, fy: 0.68 },
-    { fx: 0.2, fy: 0.9 }, { fx: 0.5, fy: 0.9 }, { fx: 0.8, fy: 0.9 },
-  ];
+  const SHAPE_COUNTS = [3, 4, 6];
+  const adaptive = KidsApp.createAdaptive('shape-sorter', SHAPE_COUNTS.length);
+
+  function makeSlots(count, section) {
+    const cols = count <= 3 ? count : count === 4 ? 2 : 3;
+    const rows = Math.ceil(count / cols);
+    const yRows = section === 'holes'
+      ? (rows === 1 ? [0.3] : [0.2, 0.42])
+      : (rows === 1 ? [0.76] : [0.68, 0.89]);
+    const slots = [];
+    for (let i = 0; i < count; i++) {
+      const row = Math.floor(i / cols);
+      const itemsInRow = Math.min(cols, count - row * cols);
+      const col = i % cols;
+      slots.push({ fx: (col + 1) / (itemsInRow + 1), fy: yRows[row] });
+    }
+    return slots;
+  }
 
   function starPointsStr(cx, cy, outerR, innerR) {
     const pts = [];
@@ -85,11 +94,14 @@
     holeEls.length = 0;
     pieces.length = 0;
     layoutSize();
+    const activeShapes = SHAPES.slice(0, SHAPE_COUNTS[adaptive.level]);
+    const holeSlots = makeSlots(activeShapes.length, 'holes');
+    const pieceSlots = makeSlots(activeShapes.length, 'pieces');
 
-    SHAPES.forEach((shape, i) => {
+    activeShapes.forEach((shape, i) => {
       const holeWrap = document.createElement('div');
       holeWrap.className = 'hole';
-      const slot = HOLE_SLOTS[i];
+      const slot = holeSlots[i];
       const p = posFor(slot.fx, slot.fy);
       holeWrap.style.left = p.x + 'px';
       holeWrap.style.top = p.y + 'px';
@@ -99,10 +111,10 @@
       holeEls.push({ shape, fx: slot.fx, fy: slot.fy, el: holeWrap, filled: false });
     });
 
-    const order = SHAPES.map((s, i) => i).sort(() => Math.random() - 0.5);
+    const order = activeShapes.map((s, i) => i).sort(() => Math.random() - 0.5);
     order.forEach((shapeIdx, i) => {
-      const shape = SHAPES[shapeIdx];
-      const slot = PIECE_SLOTS[i];
+      const shape = activeShapes[shapeIdx];
+      const slot = pieceSlots[i];
       const pieceEl = document.createElement('div');
       pieceEl.className = 'piece';
       const home = posFor(slot.fx, slot.fy);
@@ -161,10 +173,12 @@
         el.classList.add('placed');
         bestHole.filled = true;
         KidsApp.Sound.chime();
+        KidsApp.speak(piece.shape.name + '、できたね！');
         const rect = el.getBoundingClientRect();
         KidsApp.confettiBurst(document.body, rect.left + rect.width / 2, rect.top + rect.height / 2, 14);
         checkComplete();
       } else {
+        adaptive.record(false);
         const home = posFor(piece.homeFx, piece.homeFy);
         el.style.left = home.x + 'px';
         el.style.top = home.y + 'px';
@@ -177,6 +191,7 @@
 
   function checkComplete() {
     if (holeEls.every((h) => h.filled)) {
+      adaptive.record(true);
       setTimeout(() => {
         KidsApp.Sound.success();
         KidsApp.speak('ぜんぶ できたね！');

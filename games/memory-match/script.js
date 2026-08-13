@@ -2,13 +2,20 @@
   KidsApp.initCommon();
 
   const EMOJI_POOL = ['🍎', '🍌', '🍇', '🍓', '🍊', '🥕', '🐶', '🐱', '🐸', '🦋', '🌸', '⭐'];
-  const PAIR_COUNT = 6;
+  const EMOJI_NAMES = {
+    '🍎': 'りんご', '🍌': 'ばなな', '🍇': 'ぶどう', '🍓': 'いちご',
+    '🍊': 'みかん', '🥕': 'にんじん', '🐶': 'いぬ', '🐱': 'ねこ',
+    '🐸': 'かえる', '🦋': 'ちょうちょ', '🌸': 'おはな', '⭐': 'ほし',
+  };
+  const PAIR_COUNTS = [2, 3, 4, 6];
+  const adaptive = KidsApp.createAdaptive('memory-match', PAIR_COUNTS.length);
 
   const grid = document.getElementById('grid');
   let cards = [];
   let firstCard = null;
   let locked = false;
   let matchedCount = 0;
+  let currentPairCount = PAIR_COUNTS[0];
 
   function shuffle(arr) {
     return arr
@@ -23,12 +30,17 @@
     locked = false;
     matchedCount = 0;
 
-    const chosen = shuffle(EMOJI_POOL).slice(0, PAIR_COUNT);
+    currentPairCount = PAIR_COUNTS[adaptive.level];
+    grid.style.gridTemplateColumns = `repeat(${currentPairCount <= 2 ? 2 : currentPairCount === 3 ? 3 : 4}, minmax(60px, 1fr))`;
+    grid.style.maxWidth = currentPairCount <= 2 ? '340px' : currentPairCount === 3 ? '470px' : '620px';
+    const chosen = shuffle(EMOJI_POOL).slice(0, currentPairCount);
     const deck = shuffle([...chosen, ...chosen]);
 
     cards = deck.map((emoji) => {
-      const card = document.createElement('div');
+      const card = document.createElement('button');
+      card.type = 'button';
       card.className = 'card';
+      card.setAttribute('aria-label', 'カードをめくる');
       card.innerHTML = `
         <div class="card-inner">
           <div class="card-face card-front">★</div>
@@ -39,6 +51,15 @@
       card.addEventListener('pointerdown', () => onTap(state));
       return state;
     });
+
+    if (adaptive.level <= 1) {
+      locked = true;
+      cards.forEach((card) => flip(card, true));
+      setTimeout(() => {
+        cards.forEach((card) => flip(card, false));
+        locked = false;
+      }, 900);
+    }
   }
 
   function onTap(card) {
@@ -58,12 +79,14 @@
       card.el.classList.add('matched');
       firstCard.el.classList.add('matched');
       KidsApp.Sound.chime();
+      KidsApp.speak(EMOJI_NAMES[card.emoji] + '、そろったね！');
       const rect = card.el.getBoundingClientRect();
       KidsApp.confettiBurst(document.body, rect.left + rect.width / 2, rect.top + rect.height / 2, 12);
       matchedCount++;
       firstCard = null;
       locked = false;
-      if (matchedCount === PAIR_COUNT) {
+      if (matchedCount === currentPairCount) {
+        adaptive.record(true);
         setTimeout(() => {
           KidsApp.Sound.success();
           KidsApp.speak('ぜんぶ そろったね！');
@@ -74,6 +97,7 @@
         setTimeout(build, 2500);
       }
     } else {
+      adaptive.record(false);
       const second = card;
       const first = firstCard;
       setTimeout(() => {

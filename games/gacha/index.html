@@ -36,8 +36,9 @@
     margin-bottom: 4px;
   }
   .collection-row__slot {
-    width: 24px;
-    height: 24px;
+    width: 32px;
+    height: 32px;
+    padding: 0;
     border-radius: 50%;
     background: var(--white);
     display: flex;
@@ -387,6 +388,13 @@
     color: var(--ink);
     text-shadow: 0 2px 0 rgba(255,255,255,0.9), 0 4px 10px rgba(74,59,120,0.25);
   }
+  .prize-name__fact {
+    max-width: min(82vw, 360px);
+    margin-top: 4px;
+    font-size: clamp(13px, 3.5vw, 17px);
+    color: var(--ink-soft);
+    text-shadow: 0 2px 0 rgba(255,255,255,0.9);
+  }
   .prize-name__new {
     font-size: 16px;
     font-weight: 800;
@@ -437,6 +445,7 @@
   <div class="prize-hero" id="prizeHero"></div>
   <div class="prize-name" id="prizeName">
     <div class="prize-name__text" id="prizeNameText"></div>
+    <div class="prize-name__fact" id="prizeFact"></div>
     <div class="prize-name__new">はじめて！</div>
   </div>
 
