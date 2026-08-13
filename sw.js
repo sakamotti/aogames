@@ -2,7 +2,7 @@
 // (the whole point: this app is meant to be used out and about).
 // Paths are relative to this file's own location, so it works whether the
 // site is hosted at a domain root or a GitHub Pages project subpath.
-const CACHE_VERSION = 'v34';
+const CACHE_VERSION = 'v35';
 const CACHE_NAME = `asobibako-${CACHE_VERSION}`;
 
 const PRECACHE_URLS = [
@@ -22,6 +22,10 @@ const PRECACHE_URLS = [
   'icons/characters/usagi.png',
   'icons/animals/dog.png',
   'icons/animals/cat.png',
+  'icons/animals/dog-happy.png',
+  'icons/animals/dog-eating.png',
+  'icons/animals/cat-happy.png',
+  'icons/animals/cat-eating.png',
   'icons/animals/cow.png',
   'icons/animals/frog.png',
   'icons/animals/pig.png',
