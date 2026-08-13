@@ -41,7 +41,8 @@
     options.forEach((animal) => {
       const card = document.createElement('button');
       card.className = 'option-card';
-      card.innerHTML = `<img class="option-card__img" src="${animal.img}" alt="">`;
+      card.innerHTML = `<img class="option-card__img" src="${animal.img}" alt="${animal.name}">`;
+      card.setAttribute('aria-label', animal.name);
       card.addEventListener('pointerdown', () => onPick(animal, card));
       optionsEl.appendChild(card);
     });

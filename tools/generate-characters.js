@@ -22,18 +22,14 @@ function fillCircleOutlined(cv, cx, cy, r, fillColor, outlineColor, outlineWidth
   fillCircle(cv, cx, cy, r, fillColor);
 }
 
-// A small standing body drawn beneath the head so every mascot reads as a
-// full character instead of some being face-only portraits and others
-// (like the pet-friends animals) having bodies. Kept subordinate to the
-// head - close to the original head-only proportions - rather than a big
-// "chibi" torso, per feedback that an equally-prominent body read as too
-// deformed/toy-like. Drawn before the head/ears/face so the head naturally
-// overlaps and hides the neck seam.
+// A friendly standing body drawn beneath the head. The body is large enough
+// to read as a real character at small sizes, while the head remains the
+// visual focus for toddlers. It is drawn first so the head overlaps the
+// shoulders instead of looking like two stacked circles.
 function drawStandingBody(cv, cx, headCy, headR, bodyColor, outlineColor, footColor) {
-  const neckY = headCy + headR * 0.8;
-  const bodyRx = headR * 0.68;
-  const bodyRy = headR * 0.5;
-  const bodyCy = neckY + bodyRy * 0.55;
+  const bodyRx = headR * 0.84;
+  const bodyRy = headR * 0.62;
+  const bodyCy = headCy + headR * 1.16;
 
   fillEllipse(cv, cx - bodyRx * 0.5, bodyCy + bodyRy * 0.86, headR * 0.24, headR * 0.15, 0.08, footColor);
   fillEllipse(cv, cx + bodyRx * 0.5, bodyCy + bodyRy * 0.86, headR * 0.24, headR * 0.15, -0.08, footColor);
@@ -61,7 +57,7 @@ function drawFace(cv, cx, cy, r, { blush = '#FFB0C8', mouth = '#FF6FA5' } = {}) 
 
 function drawBear(size) {
   const cv = makeCanvas(size, size);
-  const cx = size * 0.5, cy = size * 0.44, r = size * 0.31;
+  const cx = size * 0.5, cy = size * 0.31, r = size * 0.27;
   const fur = '#E3A76F';
   const furDark = '#C98B57';
   const outline = '#B87A45';
@@ -88,7 +84,7 @@ function drawBear(size) {
 
 function drawCat(size) {
   const cv = makeCanvas(size, size);
-  const cx = size * 0.5, cy = size * 0.44, r = size * 0.31;
+  const cx = size * 0.5, cy = size * 0.31, r = size * 0.27;
   const fur = '#FFEFD9';
   const outline = '#E9C9A0';
   const patch = '#F4A94F';
@@ -137,7 +133,7 @@ function drawCat(size) {
 
 function drawRabbit(size) {
   const cv = makeCanvas(size, size);
-  const cx = size * 0.5, cy = size * 0.44, r = size * 0.31;
+  const cx = size * 0.5, cy = size * 0.31, r = size * 0.27;
   const fur = '#FFF8FA';
   const outline = '#F3C9D8';
   const inner = '#FFC2D6';
