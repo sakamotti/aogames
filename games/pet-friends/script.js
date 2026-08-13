@@ -5,11 +5,17 @@
 
   const PETS = {
     cat: {
-      name: 'みけ', image: '../../icons/animals/cat.png', treat: '🐟', sfx: 'cat',
+      name: 'みけ', image: '../../icons/animals/cat.png',
+      happyImage: '../../icons/animals/cat-happy.png',
+      eatingImage: '../../icons/animals/cat-eating.png',
+      treat: '🐟', sfx: 'cat',
       happySound: () => KidsApp.Sound.purr(), petVoice: 'みけを やさしく なでなで してね',
     },
     dog: {
-      name: 'ポチ', image: '../../icons/animals/dog.png', treat: '🍖', sfx: 'dog',
+      name: 'ポチ', image: '../../icons/animals/dog.png',
+      happyImage: '../../icons/animals/dog-happy.png',
+      eatingImage: '../../icons/animals/dog-eating.png',
+      treat: '🍖', sfx: 'dog',
       happySound: () => KidsApp.Sound.pant(), petVoice: 'ポチを やさしく なでなで してね',
     },
   };
@@ -45,6 +51,7 @@
   let particleDistance = 0;
   let lastHappySoundAt = 0;
   let feeding = false;
+  let happyImageTimer = null;
   const currentNeed = { cat: 'food', dog: 'water' };
   let idleTimer = null;
 
@@ -56,6 +63,29 @@
 
   function currentPet() {
     return PETS[species];
+  }
+
+  Object.values(PETS).forEach((pet) => {
+    [pet.happyImage, pet.eatingImage].forEach((src) => {
+      const image = new Image();
+      image.src = src;
+    });
+  });
+
+  function setPetImage(state = 'normal', faceRight = false) {
+    clearTimeout(happyImageTimer);
+    const pet = currentPet();
+    const src = state === 'happy' ? pet.happyImage : state === 'eating' ? pet.eatingImage : pet.image;
+    els.petImage.src = src;
+    els.petImage.alt = pet.name;
+    els.petActor.classList.toggle('face-right', faceRight);
+  }
+
+  function showHappyImage(duration = 900) {
+    setPetImage('happy');
+    happyImageTimer = setTimeout(() => {
+      if (!feeding) setPetImage('normal');
+    }, duration);
   }
 
   function renderAffection() {
@@ -111,7 +141,8 @@
     setTimeout(() => particle.remove(), 560);
   }
 
-  function celebrateFriendship() {
+  function celebrateFriendship(showImage = true) {
+    if (showImage) showHappyImage(1500);
     showHint('だいすき！');
     KidsApp.Sound.success();
     KidsApp.speak(`${currentPet().name}も だいすき！`);
@@ -124,12 +155,13 @@
     }, 1300);
   }
 
-  function awardAffection() {
+  function awardAffection({ showImage = true } = {}) {
     affection[species] = Math.min(5, affection[species] + 1);
     renderAffection();
+    if (showImage) showHappyImage();
     showHint(KidsApp.choice(['うれしい！', 'もっと！', 'きもちいい！']));
     KidsApp.Sound.chime();
-    if (affection[species] >= 5) setTimeout(celebrateFriendship, 260);
+    if (affection[species] >= 5) setTimeout(() => celebrateFriendship(showImage), 260);
   }
 
   function beginPetting(event) {
@@ -209,6 +241,8 @@
     const side = Math.random() < .5 ? -1 : 1;
     const available = Math.min(96, Math.max(58, els.petArea.clientWidth * .19));
     const offset = side * available;
+    const mouthReach = Math.min(72, Math.max(48, els.petImage.clientWidth * .16));
+    const actorOffset = offset - side * mouthReach;
 
     els.foodSpot.style.left = `calc(50% + ${offset}px)`;
     els.foodSpot.classList.remove('eaten');
@@ -218,11 +252,12 @@
     KidsApp.Sound.tap();
 
     els.petActor.classList.add('walking');
-    els.petActor.style.transform = `translateX(${offset}px)`;
+    els.petActor.style.transform = `translateX(${actorOffset}px)`;
 
     setTimeout(() => {
       els.petActor.classList.remove('walking');
       els.petActor.classList.add('eating');
+      setPetImage('eating', side > 0);
       showHint('もぐもぐ');
       KidsApp.Sound.munch();
       setTimeout(() => KidsApp.Sound.munch(), 230);
@@ -231,16 +266,19 @@
         const foodRect = els.foodSpot.getBoundingClientRect();
         els.foodSpot.classList.add('eaten');
         spawnHeart(foodRect.left + foodRect.width / 2, foodRect.top);
-        awardAffection();
+        awardAffection({ showImage: false });
         advanceNeed();
+        setPetImage('happy');
 
         setTimeout(() => {
           els.petActor.classList.remove('eating');
           els.petActor.classList.add('walking');
+          setPetImage('normal');
           els.petActor.style.transform = 'translateX(0)';
           setTimeout(() => {
             els.petActor.classList.remove('walking');
             els.foodSpot.classList.remove('shown', 'eaten');
+            setPetImage('normal');
             setCareButtonsDisabled(false);
             feeding = false;
           }, WALK_MS);
@@ -278,12 +316,13 @@
       const rect = els.petImage.getBoundingClientRect();
       spawnHeart(rect.left + rect.width / 2, rect.top + rect.height * .25);
       els.foodSpot.classList.add('eaten');
-      awardAffection();
+      awardAffection({ showImage: action !== 'sleep' });
       advanceNeed();
       setTimeout(() => {
         els.petActor.classList.remove('caring', careInfo.className);
         els.foodSpot.classList.remove('shown', 'eaten');
         els.foodIcon.textContent = currentPet().treat;
+        setPetImage('normal');
         setCareButtonsDisabled(false);
         feeding = false;
       }, 760);
@@ -299,8 +338,7 @@
     endPetting();
     species = next;
     const pet = currentPet();
-    els.petImage.src = pet.image;
-    els.petImage.alt = pet.name;
+    setPetImage('normal');
     els.petName.textContent = pet.name;
     els.treatIcon.textContent = pet.treat;
     els.foodIcon.textContent = pet.treat;
