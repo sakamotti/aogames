@@ -79,6 +79,20 @@
     height: clamp(48px, 10vw, 66px);
     margin-bottom: 10px;
   }
+  .game-tile__pet-pair {
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    height: clamp(50px, 11vw, 70px);
+    margin-bottom: 8px;
+  }
+  .game-tile__pet-pair img {
+    width: clamp(48px, 10vw, 66px);
+    height: clamp(48px, 10vw, 66px);
+    object-fit: contain;
+    filter: drop-shadow(0 5px 4px rgba(74, 59, 120, 0.16));
+  }
+  .game-tile__pet-pair img + img { margin-left: clamp(-14px, -2vw, -8px); }
   .friends-row {
     display: flex;
     gap: 14px;
@@ -193,7 +207,10 @@
         <div class="game-tile__label">かずあそび</div>
       </a>
       <a class="game-tile" style="--tile-color:var(--coral)" href="games/pet-friends/index.html">
-        <div class="game-tile__emoji">🐾</div>
+        <div class="game-tile__pet-pair" aria-hidden="true">
+          <img src="icons/animals/cat.png" alt="">
+          <img src="icons/animals/dog.png" alt="">
+        </div>
         <div class="game-tile__label">なでなで</div>
       </a>
       <a class="game-tile" style="--tile-color:var(--blue)" href="games/elevator/index.html">

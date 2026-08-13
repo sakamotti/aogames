@@ -1,14 +1,16 @@
 (function () {
+  'use strict';
+
   KidsApp.initCommon();
 
-  const SPECIES = {
+  const PETS = {
     cat: {
-      wrap: 'wrapCat', svg: 'svgCat', actor: 'actorCat', food: 'foodCat',
-      name: 'みけ', treat: '🐟', sfx: 'cat', purr: () => KidsApp.Sound.purr(),
+      name: 'みけ', image: '../../icons/animals/cat.png', treat: '🐟', sfx: 'cat',
+      happySound: () => KidsApp.Sound.purr(), petVoice: 'みけを やさしく なでなで してね',
     },
     dog: {
-      wrap: 'wrapDog', svg: 'svgDog', actor: 'actorDog', food: 'foodDog',
-      name: 'ポチ', treat: '🍖', sfx: 'dog', purr: () => KidsApp.Sound.pant(),
+      name: 'ポチ', image: '../../icons/animals/dog.png', treat: '🍖', sfx: 'dog',
+      happySound: () => KidsApp.Sound.pant(), petVoice: 'ポチを やさしく なでなで してね',
     },
   };
 
@@ -17,195 +19,250 @@
     btnDog: document.getElementById('btnDog'),
     affectionRow: document.getElementById('affectionRow'),
     petName: document.getElementById('petName'),
+    petArea: document.querySelector('.pet-area'),
+    petActor: document.getElementById('petActor'),
+    petImage: document.getElementById('petImage'),
+    hintBubble: document.getElementById('hintBubble'),
+    foodSpot: document.getElementById('foodSpot'),
+    foodIcon: document.getElementById('foodIcon'),
     treatBowl: document.getElementById('treatBowl'),
-    wrapCat: document.getElementById('wrapCat'),
-    wrapDog: document.getElementById('wrapDog'),
+    treatIcon: document.getElementById('treatIcon'),
+    rubGlow: document.getElementById('rubGlow'),
   };
 
   let species = 'cat';
-  let affection = 0;
-  let petting = false;
-  let petSessionStart = 0;
-  let petAwarded = false;
-  let lastHeartAt = 0;
-  let lastPurrAt = 0;
-  let idleTimer = null;
+  const affection = { cat: 0, dog: 0 };
+  let activePointer = null;
+  let lastPoint = null;
+  let strokeDistance = 0;
+  let particleDistance = 0;
+  let lastHappySoundAt = 0;
   let feeding = false;
+  let idleTimer = null;
 
   for (let i = 0; i < 5; i++) {
-    const span = document.createElement('span');
-    span.textContent = '🐾';
-    els.affectionRow.appendChild(span);
+    const heart = document.createElement('span');
+    heart.textContent = '💗';
+    els.affectionRow.appendChild(heart);
   }
 
-  function currentWrap() {
-    return document.getElementById(SPECIES[species].wrap);
-  }
-  function currentSvg() {
-    return document.getElementById(SPECIES[species].svg);
-  }
-  function currentActor() {
-    return document.getElementById(SPECIES[species].actor);
-  }
-  function currentFood() {
-    return document.getElementById(SPECIES[species].food);
+  function currentPet() {
+    return PETS[species];
   }
 
   function renderAffection() {
-    [...els.affectionRow.children].forEach((span, i) => {
-      span.classList.toggle('filled', i < affection);
+    [...els.affectionRow.children].forEach((heart, index) => {
+      heart.classList.toggle('filled', index < affection[species]);
     });
+    els.affectionRow.setAttribute('aria-label', `なかよし ${affection[species]} / 5`);
   }
 
-  function awardAffection() {
-    affection = Math.min(5, affection + 1);
-    renderAffection();
-    if (affection >= 5) {
-      setTimeout(() => {
-        KidsApp.Sound.success();
-        KidsApp.speak('だいすき！');
-        const rect = currentWrap().getBoundingClientRect();
-        KidsApp.confettiBurst(document.body, rect.left + rect.width / 2, rect.top + rect.height / 2, 20);
-        affection = 0;
-        renderAffection();
-      }, 250);
-    }
+  function showHint(text) {
+    els.hintBubble.textContent = text;
+    els.hintBubble.classList.remove('pop');
+    void els.hintBubble.offsetWidth;
+    els.hintBubble.classList.add('pop');
   }
 
   function spawnHeart(x, y) {
-    const el = document.createElement('div');
-    el.className = 'heart-particle';
-    el.textContent = KidsApp.choice(['💗', '💕', '💖']);
-    el.style.left = x + 'px';
-    el.style.top = y + 'px';
-    el.style.setProperty('--hx', KidsApp.rand(-30, 30) + 'px');
-    document.body.appendChild(el);
-    setTimeout(() => el.remove(), 800);
+    const particle = document.createElement('div');
+    particle.className = 'heart-particle';
+    particle.textContent = KidsApp.choice(['💗', '💕', '💖']);
+    particle.style.left = `${x}px`;
+    particle.style.top = `${y}px`;
+    particle.style.setProperty('--drift', `${KidsApp.rand(-38, 38)}px`);
+    particle.style.setProperty('--turn', `${KidsApp.rand(-18, 18)}deg`);
+    document.body.appendChild(particle);
+    setTimeout(() => particle.remove(), 850);
   }
 
-  function startPetting() {
-    if (petting || feeding) return;
-    petting = true;
-    petSessionStart = performance.now();
-    petAwarded = false;
-    currentSvg().classList.add('petting');
-  }
-  function stopPetting() {
-    if (!petting) return;
-    petting = false;
-    currentSvg().classList.remove('petting');
+  function spawnSpark(x, y) {
+    const particle = document.createElement('div');
+    particle.className = 'spark-particle';
+    particle.style.left = `${x}px`;
+    particle.style.top = `${y}px`;
+    particle.style.setProperty('--sx', `${KidsApp.rand(-35, 35)}px`);
+    particle.style.setProperty('--sy', `${KidsApp.rand(-38, 10)}px`);
+    document.body.appendChild(particle);
+    setTimeout(() => particle.remove(), 560);
   }
 
-  function onPetMove(x, y) {
-    if (!petting) return;
+  function celebrateFriendship() {
+    showHint('だいすき！');
+    KidsApp.Sound.success();
+    KidsApp.speak(`${currentPet().name}も だいすき！`);
+    const rect = els.petImage.getBoundingClientRect();
+    KidsApp.confettiBurst(document.body, rect.left + rect.width / 2, rect.top + rect.height / 2, 22);
+    setTimeout(() => {
+      affection[species] = 0;
+      renderAffection();
+      showHint('もっと なでてね');
+    }, 1300);
+  }
+
+  function awardAffection() {
+    affection[species] = Math.min(5, affection[species] + 1);
+    renderAffection();
+    showHint(KidsApp.choice(['うれしい！', 'もっと！', 'きもちいい！']));
+    KidsApp.Sound.chime();
+    if (affection[species] >= 5) setTimeout(celebrateFriendship, 260);
+  }
+
+  function beginPetting(event) {
+    if (feeding || activePointer !== null) return;
+    activePointer = event.pointerId;
+    lastPoint = { x: event.clientX, y: event.clientY };
+    strokeDistance = 0;
+    particleDistance = 0;
+    els.petActor.classList.add('petting');
+    els.rubGlow.classList.add('visible');
+    els.rubGlow.style.left = `${event.clientX}px`;
+    els.rubGlow.style.top = `${event.clientY}px`;
+    els.petActor.setPointerCapture?.(event.pointerId);
+    spawnSpark(event.clientX, event.clientY);
+  }
+
+  function continuePetting(event) {
+    if (event.pointerId !== activePointer || !lastPoint) return;
+    const dx = event.clientX - lastPoint.x;
+    const dy = event.clientY - lastPoint.y;
+    const distance = Math.min(Math.hypot(dx, dy), 55);
+    lastPoint = { x: event.clientX, y: event.clientY };
+    els.rubGlow.style.left = `${event.clientX}px`;
+    els.rubGlow.style.top = `${event.clientY}px`;
+
+    if (distance < 2) return;
+    strokeDistance += distance;
+    particleDistance += distance;
+
+    if (particleDistance >= 52) {
+      particleDistance = 0;
+      spawnHeart(event.clientX, event.clientY);
+      spawnSpark(event.clientX + KidsApp.rand(-16, 16), event.clientY + KidsApp.rand(-16, 16));
+    }
+
     const now = performance.now();
-    if (now - lastHeartAt > 220) {
-      spawnHeart(x, y);
-      lastHeartAt = now;
+    if (now - lastHappySoundAt > 430) {
+      currentPet().happySound();
+      lastHappySoundAt = now;
     }
-    if (now - lastPurrAt > 380) {
-      SPECIES[species].purr();
-      lastPurrAt = now;
-    }
-    if (!petAwarded && now - petSessionStart > 1200) {
-      petAwarded = true;
+
+    if (strokeDistance >= 285) {
+      strokeDistance -= 285;
       awardAffection();
     }
   }
 
-  function attachPetting(wrapEl) {
-    wrapEl.addEventListener('pointerdown', (e) => {
-      startPetting();
-      onPetMove(e.clientX, e.clientY);
-    });
-    wrapEl.addEventListener('pointermove', (e) => {
-      if (e.buttons === 0 && e.pointerType !== 'touch') return;
-      onPetMove(e.clientX, e.clientY);
-    });
-    wrapEl.addEventListener('pointerup', stopPetting);
-    wrapEl.addEventListener('pointercancel', stopPetting);
-    wrapEl.addEventListener('pointerleave', stopPetting);
+  function endPetting(event) {
+    if (event && event.pointerId !== activePointer) return;
+    activePointer = null;
+    lastPoint = null;
+    strokeDistance = 0;
+    els.petActor.classList.remove('petting');
+    els.rubGlow.classList.remove('visible');
   }
-  attachPetting(els.wrapCat);
-  attachPetting(els.wrapDog);
 
-  // Feeding is a little story: a bowl of food appears on the ground to one
-  // side, the pet notices, waddles over to it, eats, then wanders back.
-  const WALK_PX = 92;
-  const WALK_MS = 800;
+  els.petActor.addEventListener('pointerdown', beginPetting);
+  els.petActor.addEventListener('pointermove', continuePetting);
+  els.petActor.addEventListener('pointerup', endPetting);
+  els.petActor.addEventListener('pointercancel', endPetting);
+  els.petActor.addEventListener('lostpointercapture', endPetting);
+  els.petActor.addEventListener('keydown', (event) => {
+    if ((event.key === 'Enter' || event.key === ' ') && !feeding) {
+      event.preventDefault();
+      spawnHeart(innerWidth / 2, innerHeight / 2);
+      awardAffection();
+    }
+  });
+
+  const WALK_MS = 760;
 
   function feed() {
     if (feeding) return;
-    if (petting) stopPetting();
+    endPetting();
     feeding = true;
     els.treatBowl.disabled = true;
+    const side = Math.random() < .5 ? -1 : 1;
+    const available = Math.min(96, Math.max(58, els.petArea.clientWidth * .19));
+    const offset = side * available;
 
-    const svg = currentSvg();
-    const actor = currentActor();
-    const food = currentFood();
-    const side = Math.random() < 0.5 ? -1 : 1;
-    const offset = side * WALK_PX;
-
-    food.style.left = `calc(50% + ${offset}px)`;
-    food.classList.remove('eaten');
-    // force reflow so the pop-in transition replays even if reused quickly
-    void food.offsetWidth;
-    food.classList.add('shown');
+    els.foodSpot.style.left = `calc(50% + ${offset}px)`;
+    els.foodSpot.classList.remove('eaten');
+    void els.foodSpot.offsetWidth;
+    els.foodSpot.classList.add('shown');
+    showHint('ごはんだ！');
     KidsApp.Sound.tap();
 
-    svg.classList.add('walking');
-    actor.style.transform = `translateX(${offset}px)`;
+    els.petActor.classList.add('walking');
+    els.petActor.style.transform = `translateX(${offset}px)`;
 
     setTimeout(() => {
-      svg.classList.remove('walking');
-      svg.classList.add('eating');
+      els.petActor.classList.remove('walking');
+      els.petActor.classList.add('eating');
+      showHint('もぐもぐ');
       KidsApp.Sound.munch();
-      setTimeout(() => KidsApp.Sound.munch(), 220);
-      food.classList.add('eaten');
-      const rect = food.getBoundingClientRect();
-      spawnHeart(rect.left + rect.width / 2, rect.top);
+      setTimeout(() => KidsApp.Sound.munch(), 230);
 
       setTimeout(() => {
-        svg.classList.remove('eating');
+        const foodRect = els.foodSpot.getBoundingClientRect();
+        els.foodSpot.classList.add('eaten');
+        spawnHeart(foodRect.left + foodRect.width / 2, foodRect.top);
         awardAffection();
-        svg.classList.add('walking');
-        actor.style.transform = 'translateX(0)';
+
         setTimeout(() => {
-          svg.classList.remove('walking');
-          feeding = false;
-          els.treatBowl.disabled = false;
-        }, WALK_MS);
-      }, 700);
+          els.petActor.classList.remove('eating');
+          els.petActor.classList.add('walking');
+          els.petActor.style.transform = 'translateX(0)';
+          setTimeout(() => {
+            els.petActor.classList.remove('walking');
+            els.foodSpot.classList.remove('shown', 'eaten');
+            els.treatBowl.disabled = false;
+            feeding = false;
+          }, WALK_MS);
+        }, 560);
+      }, 560);
     }, WALK_MS);
   }
+
   els.treatBowl.addEventListener('pointerdown', feed);
 
   function setSpecies(next) {
-    if (species === next || feeding) return;
-    stopPetting();
+    if (feeding || next === species) return;
+    endPetting();
     species = next;
-    els.wrapCat.classList.toggle('active', next === 'cat');
-    els.wrapDog.classList.toggle('active', next === 'dog');
+    const pet = currentPet();
+    els.petImage.src = pet.image;
+    els.petImage.alt = pet.name;
+    els.petName.textContent = pet.name;
+    els.treatIcon.textContent = pet.treat;
+    els.foodIcon.textContent = pet.treat;
+    els.petActor.setAttribute('aria-label', `${pet.name}をなでる`);
+    els.petArea.setAttribute('aria-label', `${pet.name}をなでる場所`);
+    els.treatBowl.setAttribute('aria-label', `${pet.name}にごはんをあげる`);
     els.btnCat.classList.toggle('active', next === 'cat');
     els.btnDog.classList.toggle('active', next === 'dog');
-    els.petName.textContent = SPECIES[next].name;
-    els.treatBowl.textContent = SPECIES[next].treat;
+    els.btnCat.setAttribute('aria-pressed', String(next === 'cat'));
+    els.btnDog.setAttribute('aria-pressed', String(next === 'dog'));
+    renderAffection();
+    showHint('なでなで してね');
     KidsApp.Sound.tap();
+    KidsApp.speak(pet.petVoice);
   }
+
   els.btnCat.addEventListener('pointerdown', () => setSpecies('cat'));
   els.btnDog.addEventListener('pointerdown', () => setSpecies('dog'));
 
   function scheduleIdle() {
     clearTimeout(idleTimer);
     idleTimer = setTimeout(() => {
-      if (!petting && !feeding) {
-        const svg = currentSvg();
-        svg.classList.add('bounce');
-        KidsApp.AnimalSounds[SPECIES[species].sfx]();
-        setTimeout(() => svg.classList.remove('bounce'), 550);
+      if (activePointer === null && !feeding) {
+        els.petActor.classList.add('bounce');
+        showHint(KidsApp.choice(['なでて！', 'あそぼう！']));
+        KidsApp.AnimalSounds[currentPet().sfx]();
+        setTimeout(() => els.petActor.classList.remove('bounce'), 680);
       }
       scheduleIdle();
-    }, KidsApp.rand(5000, 9000));
+    }, KidsApp.rand(6200, 9800));
   }
 
   renderAffection();
