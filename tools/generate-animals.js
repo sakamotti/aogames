@@ -25,6 +25,11 @@ function fillCircleOutlined(cv, cx, cy, r, fillColor, outlineColor, outlineWidth
   fillCircle(cv, cx, cy, r, fillColor);
 }
 
+function fillEllipseOutlined(cv, cx, cy, rx, ry, rotation, fillColor, outlineColor, outlineWidth) {
+  fillEllipse(cv, cx, cy, rx + outlineWidth, ry + outlineWidth, rotation, outlineColor);
+  fillEllipse(cv, cx, cy, rx, ry, rotation, fillColor);
+}
+
 function drawEyes(cv, cx, cy, r, eyeDX = 0.32, eyeY = -0.02) {
   fillCircle(cv, cx - r * eyeDX, cy + r * eyeY, r * 0.12, INK);
   fillCircle(cv, cx + r * eyeDX, cy + r * eyeY, r * 0.12, INK);
@@ -37,48 +42,37 @@ function drawBlush(cv, cx, cy, r, color = '#FFB0C8') {
   fillCircle(cv, cx + r * 0.55, cy + r * 0.2, r * 0.15, color, 0.65);
 }
 
-function drawTail(cv, points, outerColor, innerColor, width) {
-  for (let i = 0; i < points.length - 1; i++) {
-    const a = points[i];
-    const b = points[i + 1];
-    strokeLine(cv, a[0], a[1], b[0], b[1], width + 6, outerColor);
-    strokeLine(cv, a[0], a[1], b[0], b[1], width, innerColor);
-  }
-}
+// The first mascot set was face-only and had a soft, round portrait style.
+// Keep that face as the visual anchor and add a compact seated body beneath
+// it. A narrow torso, two front paws and two side-facing back paws read as a
+// complete animal without turning the character into a wide four-legged toy.
+function drawSeatedBody(cv, cx, headCy, headR, bodyColor, outlineColor, footColor) {
+  const bodyRx = headR * 0.64;
+  const bodyRy = headR * 0.72;
+  const bodyCy = headCy + headR * 1.34;
+  const line = headR * 0.035;
 
-// A clear, friendly four-legged animal stance. The head is intentionally
-// smaller than the torso so children can recognise the animal's body,
-// legs, and defining features instead of seeing nine variations of the same
-// oversized face. Legs are drawn first so the torso overlaps their tops and
-// only the lower "foot" ends peek out below the body.
-function drawQuadrupedBody(cv, cx, headCy, headR, bodyColor, outlineColor, footColor) {
-  // Let the head overlap the shoulders. A hard head/body seam makes the
-  // animal look like two stacked balls; this overlap gives it a neck and a
-  // readable chest while keeping the silhouette simple for young children.
-  const bodyRx = headR * 1.30;
-  const bodyRy = headR * 0.50;
-  const bodyCy = headCy + headR * 1.20;
+  fillEllipseOutlined(cv, cx - headR * 0.57, bodyCy + bodyRy * 0.58,
+    headR * 0.28, headR * 0.2, -0.16, footColor, outlineColor, line);
+  fillEllipseOutlined(cv, cx + headR * 0.57, bodyCy + bodyRy * 0.58,
+    headR * 0.28, headR * 0.2, 0.16, footColor, outlineColor, line);
 
-  const legRx = headR * 0.15;
-  const legRy = headR * 0.45;
-  const legCy = bodyCy + bodyRy * 0.92;
-  [-0.7, -0.24, 0.24, 0.7].forEach((fx) => {
-    fillEllipse(cv, cx + fx * bodyRx, legCy, legRx, legRy, 0, footColor);
-  });
+  fillEllipseOutlined(cv, cx, bodyCy, bodyRx, bodyRy, 0, bodyColor, outlineColor, line);
 
-  fillEllipse(cv, cx, bodyCy, bodyRx + headR * 0.035, bodyRy + headR * 0.035, 0, outlineColor);
-  fillEllipse(cv, cx, bodyCy, bodyRx, bodyRy, 0, bodyColor);
+  fillEllipseOutlined(cv, cx - headR * 0.28, bodyCy + bodyRy * 0.22,
+    headR * 0.15, headR * 0.43, 0.04, bodyColor, outlineColor, line);
+  fillEllipseOutlined(cv, cx + headR * 0.28, bodyCy + bodyRy * 0.22,
+    headR * 0.15, headR * 0.43, -0.04, bodyColor, outlineColor, line);
 
   return { bodyCy, bodyRx, bodyRy };
 }
 
 function drawDog(size) {
   const cv = makeCanvas(size, size);
-  const cx = size * 0.5, cy = size * 0.29, r = size * 0.24;
+  const cx = size * 0.5, cy = size * 0.3, r = size * 0.25;
   const fur = '#E8B372', outline = '#C9925A', earColor = '#C9925A', snoutColor = '#FBEBD8';
 
-  drawTail(cv, [[cx + r * 0.9, cy + r * 1.12], [cx + r * 1.35, cy + r * 0.86], [cx + r * 1.42, cy + r * 0.52]], outline, fur, r * 0.16);
-  drawQuadrupedBody(cv, cx, cy, r, fur, outline, outline);
+  drawSeatedBody(cv, cx, cy, r, fur, outline, earColor);
 
   fillEllipse(cv, cx - r * 0.92, cy - r * 0.05, r * 0.3, r * 0.62, 0.35, earColor);
   fillEllipse(cv, cx + r * 0.92, cy - r * 0.05, r * 0.3, r * 0.62, -0.35, earColor);
@@ -96,11 +90,10 @@ function drawDog(size) {
 
 function drawCat(size) {
   const cv = makeCanvas(size, size);
-  const cx = size * 0.5, cy = size * 0.29, r = size * 0.24;
+  const cx = size * 0.5, cy = size * 0.3, r = size * 0.25;
   const fur = '#FFEFD9', outline = '#E9C9A0', patch = '#F4A94F';
 
-  drawTail(cv, [[cx - r * 0.95, cy + r * 1.18], [cx - r * 1.35, cy + r * 0.95], [cx - r * 1.38, cy + r * 0.62]], outline, fur, r * 0.15);
-  drawQuadrupedBody(cv, cx, cy, r, fur, outline, outline);
+  drawSeatedBody(cv, cx, cy, r, fur, outline, outline);
 
   fillPolygon(cv, earTriangle(cx, cy, r, -125, 0.8, 0.62, 0.62), outline);
   fillPolygon(cv, earTriangle(cx, cy, r, -55, 0.8, 0.62, 0.62), outline);
@@ -129,10 +122,10 @@ function drawCat(size) {
 
 function drawCow(size) {
   const cv = makeCanvas(size, size);
-  const cx = size * 0.5, cy = size * 0.29, r = size * 0.24;
+  const cx = size * 0.5, cy = size * 0.3, r = size * 0.25;
   const fur = '#FDFBF5', outline = '#D8D0C0', patch = '#6B5B4A', snoutColor = '#FFC7D6', hornColor = '#F0E4D0';
 
-  const body = drawQuadrupedBody(cv, cx, cy, r, fur, outline, outline);
+  const body = drawSeatedBody(cv, cx, cy, r, fur, outline, outline);
   fillEllipse(cv, cx - body.bodyRx * 0.62, body.bodyCy, body.bodyRx * 0.28, body.bodyRy * 0.42, -0.2, patch);
   fillEllipse(cv, cx + body.bodyRx * 0.58, body.bodyCy + body.bodyRy * 0.08, body.bodyRx * 0.24, body.bodyRy * 0.38, 0.15, patch);
 
@@ -156,10 +149,10 @@ function drawCow(size) {
 
 function drawFrog(size) {
   const cv = makeCanvas(size, size);
-  const cx = size * 0.5, cy = size * 0.31, r = size * 0.24;
+  const cx = size * 0.5, cy = size * 0.31, r = size * 0.25;
   const skin = '#8BC34A', outline = '#5E8F2E', belly = '#DFF3BC';
 
-  const body = drawQuadrupedBody(cv, cx, cy, r, skin, outline, outline);
+  const body = drawSeatedBody(cv, cx, cy, r, skin, outline, outline);
   fillEllipse(cv, cx, body.bodyCy, body.bodyRx * 0.54, body.bodyRy * 0.56, 0, belly);
   fillCircleOutlined(cv, cx, cy, r, skin, outline, r * 0.035);
 
@@ -178,11 +171,10 @@ function drawFrog(size) {
 
 function drawPig(size) {
   const cv = makeCanvas(size, size);
-  const cx = size * 0.5, cy = size * 0.29, r = size * 0.24;
+  const cx = size * 0.5, cy = size * 0.3, r = size * 0.25;
   const fur = '#FFB3C6', outline = '#E8899E', snoutColor = '#FF8FA8';
 
-  drawTail(cv, [[cx + r * 0.96, cy + r * 1.16], [cx + r * 1.34, cy + r * 1.12], [cx + r * 1.23, cy + r * 0.86], [cx + r * 1.05, cy + r * 0.98]], outline, fur, r * 0.13);
-  drawQuadrupedBody(cv, cx, cy, r, fur, outline, outline);
+  drawSeatedBody(cv, cx, cy, r, fur, outline, outline);
 
   fillPolygon(cv, earTriangle(cx, cy, r, -120, 0.75, 0.42, 0.4), outline);
   fillPolygon(cv, earTriangle(cx, cy, r, -60, 0.75, 0.42, 0.4), outline);
@@ -201,10 +193,10 @@ function drawPig(size) {
 
 function drawChicken(size) {
   const cv = makeCanvas(size, size);
-  const cx = size * 0.5, cy = size * 0.29, r = size * 0.24;
+  const cx = size * 0.5, cy = size * 0.3, r = size * 0.25;
   const feather = '#FFF6E6', outline = '#E8DCC0', comb = '#FF6B5B', beak = '#F4A94F';
 
-  const body = drawQuadrupedBody(cv, cx, cy, r, feather, outline, beak);
+  const body = drawSeatedBody(cv, cx, cy, r, feather, outline, beak);
   fillEllipse(cv, cx - body.bodyRx * 0.72, body.bodyCy - body.bodyRy * 0.05, body.bodyRx * 0.3, body.bodyRy * 0.58, -0.35, outline);
   fillEllipse(cv, cx + body.bodyRx * 0.72, body.bodyCy - body.bodyRy * 0.05, body.bodyRx * 0.3, body.bodyRy * 0.58, 0.35, outline);
 
@@ -220,12 +212,10 @@ function drawChicken(size) {
 
 function drawLion(size) {
   const cv = makeCanvas(size, size);
-  const cx = size * 0.5, cy = size * 0.29, r = size * 0.24;
+  const cx = size * 0.5, cy = size * 0.3, r = size * 0.25;
   const fur = '#F2B84B', outline = '#D89A2E', mane = '#E08A2E', snoutColor = '#FBEBD8';
 
-  drawTail(cv, [[cx + r * 0.9, cy + r * 1.18], [cx + r * 1.38, cy + r * 1.02], [cx + r * 1.46, cy + r * 0.68]], outline, fur, r * 0.15);
-  fillCircle(cv, cx + r * 1.46, cy + r * 0.62, r * 0.22, mane);
-  drawQuadrupedBody(cv, cx, cy, r, fur, outline, outline);
+  drawSeatedBody(cv, cx, cy, r, fur, outline, outline);
 
   const maneCount = 14;
   for (let i = 0; i < maneCount; i++) {
@@ -247,11 +237,10 @@ function drawLion(size) {
 
 function drawElephant(size) {
   const cv = makeCanvas(size, size);
-  const cx = size * 0.5, cy = size * 0.29, r = size * 0.24;
+  const cx = size * 0.5, cy = size * 0.3, r = size * 0.25;
   const fur = '#C3CAD3', outline = '#9AA5B0';
 
-  drawTail(cv, [[cx - r * 0.96, cy + r * 1.12], [cx - r * 1.32, cy + r * 1.2], [cx - r * 1.42, cy + r * 1.02]], outline, fur, r * 0.1);
-  drawQuadrupedBody(cv, cx, cy, r, fur, outline, outline);
+  drawSeatedBody(cv, cx, cy, r, fur, outline, outline);
 
   fillEllipse(cv, cx - r * 1.0, cy - r * 0.08, r * 0.48, r * 0.6, 0.12, outline);
   fillEllipse(cv, cx + r * 1.0, cy - r * 0.08, r * 0.48, r * 0.6, -0.12, outline);
@@ -275,10 +264,10 @@ function drawElephant(size) {
 
 function drawSheep(size) {
   const cv = makeCanvas(size, size);
-  const cx = size * 0.5, cy = size * 0.29, r = size * 0.24;
+  const cx = size * 0.5, cy = size * 0.3, r = size * 0.25;
   const wool = '#FDFBF5', woolOutline = '#E4DED0', face = '#8D7B6B', faceOutline = '#6E5E50';
 
-  const body = drawQuadrupedBody(cv, cx, cy, r, wool, woolOutline, faceOutline);
+  const body = drawSeatedBody(cv, cx, cy, r, wool, woolOutline, faceOutline);
   for (let i = 0; i < 7; i++) {
     const a = Math.PI * (0.15 + i / 7 * 0.7);
     fillCircle(cv, cx + Math.cos(a) * body.bodyRx * 0.88, body.bodyCy + Math.sin(a) * body.bodyRy * 0.84, r * 0.22, wool);
