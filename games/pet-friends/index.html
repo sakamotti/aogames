@@ -190,11 +190,15 @@
   }
 
   .pet-actor.petting .joy-halo,
-  .pet-actor.eating .joy-halo { opacity: 1; transform: scale(1); }
+  .pet-actor.eating .joy-halo,
+  .pet-actor.caring .joy-halo { opacity: 1; transform: scale(1); }
 
   .pet-actor.petting .pet-image { animation: pet-happy .46s ease-in-out infinite alternate; }
   .pet-actor.walking .pet-image { animation: pet-walk .32s ease-in-out infinite alternate; }
   .pet-actor.eating .pet-image { animation: pet-eat .36s ease-in-out infinite alternate; }
+  .pet-actor.drinking .pet-image { animation: pet-drink .42s ease-in-out infinite alternate; }
+  .pet-actor.brushing .pet-image { animation: pet-brush .45s ease-in-out infinite alternate; }
+  .pet-actor.sleeping .pet-image { animation: pet-sleep 1.2s ease-in-out infinite alternate; }
   .pet-actor.bounce .pet-image { animation: pet-hello .62s ease-out; }
 
   @keyframes pet-breathe {
@@ -215,6 +219,21 @@
   @keyframes pet-eat {
     from { transform: rotate(-1deg) translateY(0) scaleY(1); }
     to { transform: rotate(1deg) translateY(5px) scaleY(.97); }
+  }
+
+  @keyframes pet-drink {
+    from { transform: rotate(-1deg) translateY(0); }
+    to { transform: rotate(1deg) translateY(7px); }
+  }
+
+  @keyframes pet-brush {
+    from { transform: rotate(-2deg) scale(1); }
+    to { transform: rotate(2deg) scale(1.025); }
+  }
+
+  @keyframes pet-sleep {
+    from { transform: translateY(0) scale(1); filter: drop-shadow(0 17px 13px rgba(75,48,31,.22)); }
+    to { transform: translateY(4px) scale(.985); filter: drop-shadow(0 12px 10px rgba(75,48,31,.16)); }
   }
 
   @keyframes pet-hello {
@@ -274,14 +293,16 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    gap: 8px;
+    width: min(100%, 420px);
     padding-top: 6px;
   }
 
-  .treat-bowl {
-    min-width: 126px;
-    height: 64px;
-    padding: 5px 20px 8px;
-    border-radius: 24px;
+  .care-btn {
+    width: 72px;
+    height: 62px;
+    padding: 4px 5px 7px;
+    border-radius: 20px;
     color: #76523b;
     background: linear-gradient(180deg, #fff 0 54%, #efd4bf 55% 100%);
     border: 4px solid rgba(255,255,255,.86);
@@ -289,13 +310,14 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 8px;
-    font-size: 15px;
+    flex-direction: column;
+    gap: 0;
+    font-size: 12px;
   }
 
-  .treat-bowl__icon { font-size: 34px; line-height: 1; }
-  .treat-bowl:active { transform: translateY(5px); box-shadow: 0 5px 0 #cba27f; }
-  .treat-bowl[disabled] { opacity: .55; }
+  .care-btn__icon { font-size: 29px; line-height: 1; }
+  .care-btn:active { transform: translateY(5px); box-shadow: 0 5px 0 #cba27f; }
+  .care-btn[disabled] { opacity: .55; }
 
   .heart-particle,
   .spark-particle {
@@ -344,7 +366,8 @@
     .pet-image { width: min(50vw, 68vh, 350px); height: min(50vw, 68vh, 350px); }
     .hint-bubble { top: 1%; right: 8%; }
     .pet-actions { padding: 0; }
-    .treat-bowl { min-width: 108px; padding-inline: 12px; }
+    .pet-actions { width: 140px; flex-wrap: wrap; }
+    .care-btn { width: 62px; height: 58px; }
   }
 
   @media (max-height: 660px) and (orientation: portrait) {
@@ -352,7 +375,7 @@
     .species-btn { width: 60px; height: 53px; }
     .species-btn img { width: 50px; height: 50px; }
     .pet-image { width: min(72vw, 45vh, 330px); height: min(72vw, 45vh, 330px); }
-    .treat-bowl { height: 58px; }
+    .care-btn { width: 64px; height: 56px; }
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -360,6 +383,9 @@
     .pet-actor.petting .pet-image,
     .pet-actor.walking .pet-image,
     .pet-actor.eating .pet-image,
+    .pet-actor.drinking .pet-image,
+    .pet-actor.brushing .pet-image,
+    .pet-actor.sleeping .pet-image,
     .pet-actor.bounce .pet-image { animation-duration: 1ms; animation-iteration-count: 1; }
   }
 </style>
@@ -391,10 +417,22 @@
       </div>
     </section>
 
-    <div class="pet-actions">
-      <button class="treat-bowl" id="treatBowl" aria-label="みけにごはんをあげる">
-        <span class="treat-bowl__icon" id="treatIcon">🐟</span>
+    <div class="pet-actions" aria-label="おせわをえらぶ">
+      <button class="care-btn" data-care="food" aria-label="みけにごはんをあげる">
+        <span class="care-btn__icon" id="treatIcon">🐟</span>
         <span>ごはん</span>
+      </button>
+      <button class="care-btn" data-care="water" aria-label="みけにおみずをあげる">
+        <span class="care-btn__icon">💧</span>
+        <span>おみず</span>
+      </button>
+      <button class="care-btn" data-care="brush" aria-label="みけをブラシする">
+        <span class="care-btn__icon">🪮</span>
+        <span>ブラシ</span>
+      </button>
+      <button class="care-btn" data-care="sleep" aria-label="みけをねかせる">
+        <span class="care-btn__icon">🌙</span>
+        <span>ねんね</span>
       </button>
     </div>
   </main>

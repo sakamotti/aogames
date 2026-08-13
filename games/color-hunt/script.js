@@ -20,7 +20,14 @@
 
   let blobs = [];
   let target = null;
+  let previousTarget = null;
   let locked = false;
+  const LEVELS = [
+    { count: 3, names: ['あか', 'あお', 'きいろ', 'みどり'] },
+    { count: 5, names: ['あか', 'あお', 'きいろ', 'みどり', 'ピンク', 'むらさき', 'オレンジ'] },
+    { count: 8, names: POOL.map((color) => color.name) },
+  ];
+  const adaptive = KidsApp.createAdaptive('color-hunt', LEVELS.length);
 
   function shuffle(arr) {
     return arr
@@ -34,8 +41,10 @@
     blobs = [];
     const w = board.clientWidth;
     const h = board.clientHeight;
-    const size = Math.max(58, Math.min(130, Math.min(w, h) * 0.21));
-    const chosen = shuffle(POOL).slice(0, 8);
+    const level = LEVELS[adaptive.level];
+    const size = Math.max(58, Math.min(150, Math.min(w, h) * (level.count <= 3 ? 0.28 : 0.21)));
+    const pool = POOL.filter((color) => level.names.includes(color.name));
+    const chosen = shuffle(pool).slice(0, level.count);
     const placed = [];
 
     chosen.forEach((c) => {
@@ -61,7 +70,9 @@
       blobs.push(blob);
     });
 
-    target = KidsApp.choice(chosen);
+    const targetPool = chosen.filter((color) => color !== previousTarget);
+    target = KidsApp.choice(targetPool.length ? targetPool : chosen);
+    previousTarget = target;
     promptSwatch.style.background = target.hex;
     promptText.textContent = `「${target.name}」は どこかな？`;
     locked = false;
@@ -77,15 +88,17 @@
         if (b !== blob) b.el.classList.add('choice-dim');
       });
       KidsApp.Sound.chime();
+      adaptive.record(true);
       const rect = blob.el.getBoundingClientRect();
       KidsApp.confettiBurst(document.body, rect.left + rect.width / 2, rect.top + rect.height / 2, 16);
-      KidsApp.speak('せいかい！');
+      KidsApp.speak(`せいかい！ ${target.name} だね！`);
       setTimeout(layout, 2300);
     } else {
       blob.el.classList.remove('wrong');
       void blob.el.offsetWidth;
       blob.el.classList.add('wrong');
       KidsApp.Sound.tap();
+      adaptive.record(false);
     }
   }
 

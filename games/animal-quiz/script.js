@@ -21,7 +21,11 @@
   });
 
   const optionsEl = document.getElementById('options');
+  const repeatSound = document.getElementById('repeatSound');
+  const OPTION_COUNTS = [2, 3, 4];
+  const adaptive = KidsApp.createAdaptive('animal-quiz', OPTION_COUNTS.length);
   let target = null;
+  let previousTarget = null;
   let locked = false;
 
   function shuffle(arr) {
@@ -33,8 +37,11 @@
 
   function askQuestion() {
     locked = false;
-    target = KidsApp.choice(ANIMALS);
-    const distractors = shuffle(ANIMALS.filter((a) => a !== target)).slice(0, 3);
+    const candidates = ANIMALS.filter((a) => a !== previousTarget);
+    target = KidsApp.choice(candidates);
+    previousTarget = target;
+    const optionCount = OPTION_COUNTS[adaptive.level];
+    const distractors = shuffle(ANIMALS.filter((a) => a !== target)).slice(0, optionCount - 1);
     const options = shuffle([target, ...distractors]);
 
     optionsEl.innerHTML = '';
@@ -64,6 +71,7 @@
         if (c !== card) c.classList.add('choice-dim');
       });
       KidsApp.Sound.success();
+      adaptive.record(true);
       const rect = card.getBoundingClientRect();
       KidsApp.confettiBurst(document.body, rect.left + rect.width / 2, rect.top + rect.height / 2, 16);
       mascot.setText(`せいかい！「${target.name}」だね！`);
@@ -74,10 +82,17 @@
       void card.offsetWidth;
       card.classList.add('shake-x');
       KidsApp.Sound.tap();
+      adaptive.record(false);
       mascot.setText(`「${target.sound}」は どれかな？`);
       KidsApp.AnimalSounds[target.sfx]();
     }
   }
+
+  repeatSound.addEventListener('pointerdown', () => {
+    if (!target) return;
+    KidsApp.AnimalSounds[target.sfx]();
+    setTimeout(() => KidsApp.speak('だれの こえかな？'), 450);
+  });
 
   askQuestion();
 })();

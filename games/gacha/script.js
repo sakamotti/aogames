@@ -2,15 +2,15 @@
   KidsApp.initCommon();
 
   const ANIMALS = [
-    { key: 'dog', img: '../../icons/animals/dog.png', name: 'いぬ' },
-    { key: 'cat', img: '../../icons/animals/cat.png', name: 'ねこ' },
-    { key: 'cow', img: '../../icons/animals/cow.png', name: 'うし' },
-    { key: 'frog', img: '../../icons/animals/frog.png', name: 'かえる' },
-    { key: 'pig', img: '../../icons/animals/pig.png', name: 'ぶた' },
-    { key: 'chicken', img: '../../icons/animals/chicken.png', name: 'にわとり' },
-    { key: 'lion', img: '../../icons/animals/lion.png', name: 'らいおん' },
-    { key: 'elephant', img: '../../icons/animals/elephant.png', name: 'ぞう' },
-    { key: 'sheep', img: '../../icons/animals/sheep.png', name: 'ひつじ' },
+    { key: 'dog', img: '../../icons/animals/dog.png', name: 'いぬ', fact: 'においを かぐのが とくいだよ' },
+    { key: 'cat', img: '../../icons/animals/cat.png', name: 'ねこ', fact: 'たかい ところが だいすきだよ' },
+    { key: 'cow', img: '../../icons/animals/cow.png', name: 'うし', fact: 'くさを たべて くらしているよ' },
+    { key: 'frog', img: '../../icons/animals/frog.png', name: 'かえる', fact: 'ぴょんと はねて およげるよ' },
+    { key: 'pig', img: '../../icons/animals/pig.png', name: 'ぶた', fact: 'はなが とても よく きくよ' },
+    { key: 'chicken', img: '../../icons/animals/chicken.png', name: 'にわとり', fact: 'たまごを うむ とりだよ' },
+    { key: 'lion', img: '../../icons/animals/lion.png', name: 'らいおん', fact: 'おすには おおきな たてがみが あるよ' },
+    { key: 'elephant', img: '../../icons/animals/elephant.png', name: 'ぞう', fact: 'ながい はなで みずを のむよ' },
+    { key: 'sheep', img: '../../icons/animals/sheep.png', name: 'ひつじ', fact: 'からだが ふわふわの けで おおわれているよ' },
   ];
   const CAPSULE_COLORS = ['#ff6fa5', '#ffb84d', '#ffd23f', '#06d6a0', '#4ea8de', '#a78bfa', '#ff8a7a', '#2ec4b6'];
   const COLLECTION_KEY = 'kidsapp_gacha_collection';
@@ -30,6 +30,7 @@
     prizeHero: document.getElementById('prizeHero'),
     prizeName: document.getElementById('prizeName'),
     prizeNameText: document.getElementById('prizeNameText'),
+    prizeFact: document.getElementById('prizeFact'),
   };
   const HERO_FLIGHT_MS = 650; // must match the .prize-hero.show transition duration in CSS
 
@@ -65,10 +66,17 @@
 
   const slotEls = {};
   ANIMALS.forEach((a) => {
-    const slot = document.createElement('div');
+    const slot = document.createElement('button');
+    slot.type = 'button';
     slot.className = 'collection-row__slot';
     slot.innerHTML = `<img src="${a.img}" alt="">`;
+    slot.setAttribute('aria-label', a.name + 'のずかん');
     if (collection.has(a.key)) slot.classList.add('got');
+    slot.addEventListener('pointerdown', () => {
+      if (!collection.has(a.key) || busy) return;
+      KidsApp.AnimalSounds[a.key]();
+      KidsApp.speak(`${a.name}。${a.fact}`);
+    });
     els.collectionRow.appendChild(slot);
     slotEls[a.key] = slot;
   });
@@ -178,7 +186,10 @@
     els.crank.classList.remove('ready');
     KidsApp.Sound.whoosh();
 
-    const prize = KidsApp.choice(ANIMALS);
+    // Until the collection is complete, always introduce an animal the child
+    // has not met yet. This keeps the capsule fun without a duplicate loop.
+    const unseen = ANIMALS.filter((animal) => !collection.has(animal.key));
+    const prize = KidsApp.choice(unseen.length ? unseen : ANIMALS);
     pendingPrize = prize;
     els.capsule.style.background = 'none';
     const topHalf = els.capsule.querySelector('.capsule__half--top');
@@ -250,12 +261,13 @@
       els.prizeHero.classList.add('settled');
       const heroRect = els.prizeHero.getBoundingClientRect();
       els.prizeNameText.textContent = prize.name;
+      els.prizeFact.textContent = prize.fact;
       els.prizeName.classList.toggle('new', isNew);
       els.prizeName.style.left = window.innerWidth / 2 + 'px';
       els.prizeName.style.top = heroRect.bottom + 10 + 'px';
       els.prizeName.classList.add('show');
       KidsApp.confettiBurst(document.body, heroRect.left + heroRect.width / 2, heroRect.top + heroRect.height / 2, 22);
-      KidsApp.speak(isNew ? prize.name + '、はじめて ゲットだね！' : prize.name + 'が でてきたよ');
+      KidsApp.speak(`${prize.name}。${prize.fact}`);
     }, 350 + HERO_FLIGHT_MS);
 
     setTimeout(() => {

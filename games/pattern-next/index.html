@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#eef3ff">
+<title>つぎはどれ？ - あそびばこ</title>
+<link rel="manifest" href="../../manifest.json">
+<link rel="icon" href="../../icons/favicon-32.png" sizes="32x32">
+<link rel="stylesheet" href="../../shared/style.css">
+<style>
+  body { background: linear-gradient(160deg, #eef3ff, #fff3d8); overflow: hidden; }
+  .pattern-wrap {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: calc(var(--safe-top) + 68px) 14px calc(var(--safe-bottom) + var(--safe-bottom-gap));
+  }
+  .mascot-row { max-width: 92vw; margin-bottom: 18px; }
+  .sequence {
+    width: 100%;
+    max-width: 620px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: clamp(5px, 2vw, 14px);
+    flex: 1;
+    min-height: 0;
+  }
+  .sequence-item {
+    width: clamp(40px, 14vw, 92px);
+    height: clamp(40px, 14vw, 92px);
+    border-radius: 24px;
+    background: var(--white);
+    box-shadow: var(--shadow-soft);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: clamp(28px, 9vw, 56px);
+  }
+  .sequence-item.missing {
+    border: 4px dashed var(--purple);
+    background: rgba(255,255,255,0.45);
+    color: var(--purple);
+  }
+  .pattern-options {
+    width: 100%;
+    max-width: 460px;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+  }
+  .pattern-option {
+    min-height: 84px;
+    border-radius: var(--radius-md);
+    background: var(--white);
+    box-shadow: var(--shadow-soft);
+    border: 4px solid transparent;
+    font-size: clamp(34px, 10vw, 58px);
+  }
+  @media (max-height: 500px) {
+    .mascot-row { margin-bottom: 6px; }
+    .sequence-item { width: 50px; height: 50px; font-size: 30px; border-radius: 16px; }
+    .pattern-option { min-height: 62px; }
+  }
+</style>
+</head>
+<body>
+  <main class="pattern-wrap">
+    <div id="mascotHost"></div>
+    <div class="sequence" id="sequence" aria-label="ならびかた"></div>
+    <div class="pattern-options" id="options"></div>
+  </main>
+  <script src="../../shared/app.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>

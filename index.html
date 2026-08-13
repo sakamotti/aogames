@@ -28,7 +28,7 @@
   .home-wrap {
     min-height: 100vh;
     min-height: 100dvh;
-    padding: calc(env(safe-area-inset-top, 0px) + 22px) 18px calc(env(safe-area-inset-bottom, 0px) + 28px);
+    padding: calc(env(safe-area-inset-top, 0px) + 16px) 12px calc(env(safe-area-inset-bottom, 0px) + 24px);
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -37,77 +37,77 @@
     display: flex;
     align-items: center;
     gap: 10px;
-    font-size: clamp(26px, 6vw, 40px);
+    font-size: clamp(24px, 5.5vw, 36px);
     margin: 0 0 4px;
   }
   .home-title img { width: 1.15em; height: 1.15em; border-radius: 26%; box-shadow: var(--shadow-soft); }
   .home-sub {
-    margin: 0 0 22px;
+    margin: 0 0 12px;
     font-size: clamp(13px, 3vw, 16px);
     font-weight: 600;
     color: var(--ink-soft);
   }
   .game-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-    gap: 18px;
+    grid-template-columns: repeat(auto-fit, minmax(108px, 1fr));
+    gap: 12px;
     width: 100%;
-    max-width: 900px;
+    max-width: 800px;
   }
   .game-tile {
     --tile-color: var(--pink);
     background: var(--white);
     border-radius: var(--radius-lg);
     box-shadow: var(--shadow-soft);
-    padding: 18px 10px 14px;
+    padding: 10px 6px 8px;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    aspect-ratio: 1 / 0.92;
+    aspect-ratio: 1 / 0.9;
     transition: transform 0.1s ease-out;
-    border: 4px solid var(--tile-color);
+    border: 3px solid var(--tile-color);
   }
   .game-tile:active { transform: scale(0.94); }
   .game-tile__emoji {
-    font-size: clamp(40px, 9vw, 60px);
+    font-size: clamp(30px, 7vw, 44px);
     line-height: 1;
-    margin-bottom: 10px;
+    margin-bottom: 6px;
   }
   .game-tile__char {
-    width: clamp(48px, 10vw, 66px);
-    height: clamp(48px, 10vw, 66px);
-    margin-bottom: 10px;
+    width: clamp(34px, 8vw, 48px);
+    height: clamp(34px, 8vw, 48px);
+    margin-bottom: 6px;
   }
   .game-tile__pet-pair {
     display: flex;
     align-items: flex-end;
     justify-content: center;
-    height: clamp(50px, 11vw, 70px);
-    margin-bottom: 8px;
+    height: clamp(36px, 8vw, 48px);
+    margin-bottom: 6px;
   }
   .game-tile__pet-pair img {
-    width: clamp(48px, 10vw, 66px);
-    height: clamp(48px, 10vw, 66px);
+    width: clamp(34px, 8vw, 48px);
+    height: clamp(34px, 8vw, 48px);
     object-fit: contain;
-    filter: drop-shadow(0 5px 4px rgba(74, 59, 120, 0.16));
+    filter: drop-shadow(0 4px 3px rgba(74, 59, 120, 0.16));
   }
-  .game-tile__pet-pair img + img { margin-left: clamp(-14px, -2vw, -8px); }
+  .game-tile__pet-pair img + img { margin-left: clamp(-11px, -2vw, -7px); }
   .friends-row {
     display: flex;
-    gap: 14px;
-    margin-bottom: 20px;
+    gap: 10px;
+    margin-bottom: 12px;
   }
   .friends-row img {
-    width: 46px;
-    height: 46px;
+    width: 38px;
+    height: 38px;
     border-radius: 50%;
     background: var(--white);
     box-shadow: var(--shadow-soft);
     padding: 2px;
   }
   .game-tile__label {
-    font-size: clamp(15px, 3.2vw, 19px);
+    font-size: clamp(12px, 3vw, 16px);
     color: var(--ink);
     text-align: center;
   }
@@ -136,10 +136,12 @@
     .home-sub { margin-bottom: 10px; }
     .friends-row { gap: 10px; margin-bottom: 10px; }
     .friends-row img { width: 36px; height: 36px; }
-    .game-grid { grid-template-columns: repeat(auto-fit, minmax(108px, 1fr)); gap: 10px; }
-    .game-tile { padding: 12px 8px 10px; }
-    .game-tile__emoji { font-size: clamp(28px, 8vw, 42px); margin-bottom: 6px; }
-    .game-tile__char { width: clamp(34px, 8vw, 48px); height: clamp(34px, 8vw, 48px); margin-bottom: 6px; }
+    .game-grid { grid-template-columns: repeat(auto-fit, minmax(92px, 1fr)); gap: 8px; }
+    .game-tile { padding: 8px 5px 7px; aspect-ratio: 1 / 0.88; }
+    .game-tile__emoji { font-size: clamp(26px, 7vw, 34px); margin-bottom: 5px; }
+    .game-tile__char { width: clamp(30px, 7vw, 38px); height: clamp(30px, 7vw, 38px); margin-bottom: 5px; }
+    .game-tile__pet-pair { height: 38px; margin-bottom: 5px; }
+    .game-tile__pet-pair img { width: 38px; height: 38px; }
     .game-tile__label { font-size: clamp(11px, 2.8vw, 14px); }
     .home-footer { margin-top: 16px; }
   }
@@ -224,6 +226,10 @@
       <a class="game-tile" style="--tile-color:var(--teal)" href="games/night-safari/index.html">
         <div class="game-tile__emoji">🔦</div>
         <div class="game-tile__label">よるのさがしもの</div>
+      </a>
+      <a class="game-tile" style="--tile-color:var(--purple)" href="games/pattern-next/index.html">
+        <div class="game-tile__emoji">🔴🔷</div>
+        <div class="game-tile__label">つぎはどれ？</div>
       </a>
     </div>
 
