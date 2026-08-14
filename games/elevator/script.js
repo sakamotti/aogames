@@ -73,7 +73,7 @@
     KidsApp.Sound.whoosh();
     const rect = els.doors.getBoundingClientRect();
     KidsApp.confettiBurst(document.body, rect.left + rect.width / 2, rect.top + rect.height / 2, 10);
-    setTimeout(() => KidsApp.speak(FLOORS[index].speech), 250);
+    KidsApp.speak(FLOORS[index].speech, 100);
 
     closeTimer = setTimeout(() => {
       closeDoors(() => {

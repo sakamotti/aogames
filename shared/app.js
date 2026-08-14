@@ -29,6 +29,7 @@
   // asset files to buy, license, or download.
   // ---------------------------------------------------------------------
   let ctx = null;
+  let audioUnlocked = false;
   function getCtx() {
     if (!ctx) {
       const AC = global.AudioContext || global.webkitAudioContext;
@@ -47,10 +48,10 @@
     localStorage.setItem(MUTE_KEY, v ? '1' : '0');
   }
 
-  // Small, local-only learning profile. Games use this to start gently and
+  // Small, local-only learning profile. Games begin at a moderate level and
   // unlock harder rounds after repeated success. No names, scores, or personal
   // information are stored, and nothing leaves the device.
-  const LEARNING_KEY = 'kidsapp_learning_v1';
+  const LEARNING_KEY = 'kidsapp_learning_v2';
   function readLearning() {
     try {
       return JSON.parse(localStorage.getItem(LEARNING_KEY) || '{}');
@@ -64,10 +65,12 @@
     } catch (_) {}
   }
   function createAdaptive(id, levelCount, opts = {}) {
-    const promoteAfter = opts.promoteAfter || 3;
-    const easeAfter = opts.easeAfter || 2;
+    const promoteAfter = opts.promoteAfter ?? 2;
+    const easeAfter = opts.easeAfter ?? 3;
+    const startLevel = opts.startLevel ?? Math.min(1, levelCount - 1);
     const saved = readLearning()[id] || {};
-    let level = Math.max(0, Math.min(levelCount - 1, Number(saved.level) || 0));
+    const savedLevel = Number(saved.level);
+    let level = Math.max(0, Math.min(levelCount - 1, Number.isFinite(savedLevel) ? savedLevel : startLevel));
     let successes = Number(saved.successes) || 0;
     let struggles = Number(saved.struggles) || 0;
 
@@ -102,7 +105,7 @@
   }
 
   function playTone({ freq = 440, duration = 0.25, type = 'sine', gain = 0.2, glideTo = null, delay = 0 } = {}) {
-    if (isMuted()) return;
+    if (isMuted() || !audioUnlocked) return;
     const audio = getCtx();
     if (!audio) return;
     const t0 = audio.currentTime + delay;
@@ -120,7 +123,7 @@
   }
 
   function playNoise({ duration = 0.3, filterFreq = 1200, gain = 0.15, delay = 0 } = {}) {
-    if (isMuted()) return;
+    if (isMuted() || !audioUnlocked) return;
     const audio = getCtx();
     if (!audio) return;
     const t0 = audio.currentTime + delay;
@@ -166,7 +169,7 @@
     jitter = 0.04,
     delay = 0,
   }) {
-    if (isMuted()) return;
+    if (isMuted() || !audioUnlocked) return;
     const audio = getCtx();
     if (!audio) return;
     const t0 = audio.currentTime + delay;
@@ -421,30 +424,49 @@
     if (!animalClipCache[key]) {
       const el = new Audio(BASE + 'shared/sounds/' + ANIMAL_CLIP_FILES[key]);
       el.preload = 'auto';
+      el.load();
       animalClipCache[key] = el;
     }
     return animalClipCache[key];
   }
   function playAnimalClip(key) {
-    if (isMuted()) return;
+    if (isMuted() || !audioUnlocked) return;
     try {
       const el = getAnimalClip(key);
+      el.pause();
       el.currentTime = 0;
+      let started = false;
+      const fallback = () => {
+        if (started) return;
+        started = true;
+        el.pause();
+        if (AnimalSoundsSynth[key]) AnimalSoundsSynth[key]();
+      };
+      const fallbackTimer = setTimeout(fallback, 180);
+      el.addEventListener('playing', () => {
+        started = true;
+        clearTimeout(fallbackTimer);
+      }, { once: true });
       const p = el.play();
-      if (p && p.catch) p.catch(() => AnimalSoundsSynth[key] && AnimalSoundsSynth[key]());
+      if (p && p.catch) p.catch(fallback);
     } catch (e) {
       if (AnimalSoundsSynth[key]) AnimalSoundsSynth[key]();
     }
   }
   const AnimalSounds = {};
   Object.keys(ANIMAL_CLIP_FILES).forEach((key) => {
+    getAnimalClip(key);
     AnimalSounds[key] = () => playAnimalClip(key);
   });
 
   const notes = { C: 261.63, D: 293.66, E: 329.63, F: 349.23, G: 392.0, A: 440.0, B: 493.88, C2: 523.25, D2: 587.33, E2: 659.25 };
 
   const Sound = {
-    unlock() { getCtx(); },
+    unlock() {
+      audioUnlocked = true;
+      getCtx();
+      if (global.speechSynthesis) global.speechSynthesis.resume();
+    },
     pop() { playTone({ freq: 500, glideTo: 900, duration: 0.18, type: 'sine', gain: 0.22 }); },
     tap() { playTone({ freq: 320, duration: 0.09, type: 'sine', gain: 0.12 }); },
     boing() { playTone({ freq: 300, glideTo: 90, duration: 0.35, type: 'triangle', gain: 0.2 }); },
@@ -483,15 +505,35 @@
     pickVoice();
     global.speechSynthesis.onvoiceschanged = pickVoice;
   }
-  function speak(text) {
-    if (isMuted() || !global.speechSynthesis) return;
-    global.speechSynthesis.cancel();
-    const u = new SpeechSynthesisUtterance(text);
-    u.lang = 'ja-JP';
-    if (jaVoice) u.voice = jaVoice;
-    u.rate = 0.85;
-    u.pitch = 1.15;
-    global.speechSynthesis.speak(u);
+  let speechTimer = null;
+  let speechSequence = 0;
+  function cancelSpeech() {
+    speechSequence++;
+    if (speechTimer) clearTimeout(speechTimer);
+    speechTimer = null;
+    if (global.speechSynthesis) global.speechSynthesis.cancel();
+  }
+  function speak(text, delay = 0) {
+    if (isMuted() || !audioUnlocked || !global.speechSynthesis) return;
+    const sequence = ++speechSequence;
+    if (speechTimer) clearTimeout(speechTimer);
+    speechTimer = null;
+    if (global.speechSynthesis.speaking || global.speechSynthesis.pending) {
+      global.speechSynthesis.cancel();
+    }
+    const start = () => {
+      speechTimer = null;
+      if (sequence !== speechSequence || isMuted()) return;
+      const u = new SpeechSynthesisUtterance(text);
+      u.lang = 'ja-JP';
+      if (jaVoice) u.voice = jaVoice;
+      u.rate = 0.85;
+      u.pitch = 1.15;
+      global.speechSynthesis.resume();
+      global.speechSynthesis.speak(u);
+    };
+    if (delay > 0) speechTimer = setTimeout(start, delay);
+    else start();
   }
 
   // ---------------------------------------------------------------------
@@ -621,8 +663,13 @@
     btn.addEventListener('click', () => {
       setMuted(!isMuted());
       render();
-      Sound.unlock();
-      if (!isMuted()) Sound.tap();
+      if (isMuted()) {
+        cancelSpeech();
+        Object.values(animalClipCache).forEach((el) => el.pause());
+      } else {
+        Sound.unlock();
+        Sound.tap();
+      }
     });
     document.body.appendChild(btn);
   }
@@ -808,8 +855,15 @@
       () => {
         Sound.unlock();
       },
-      { once: true, passive: true }
+      { passive: true, capture: true }
     );
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'hidden') {
+        audioUnlocked = false;
+        cancelSpeech();
+        Object.values(animalClipCache).forEach((el) => el.pause());
+      }
+    });
     if (opts.home !== false) {
       initHomeButton();
       trapBackNavigation();

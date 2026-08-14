@@ -76,7 +76,7 @@
     promptSwatch.style.background = target.hex;
     promptText.textContent = `「${target.name}」は どこかな？`;
     locked = false;
-    setTimeout(() => KidsApp.speak(target.name + 'は どこかな？'), 300);
+    KidsApp.speak(target.name + 'は どこかな？', 120);
   }
 
   function onTap(blob) {

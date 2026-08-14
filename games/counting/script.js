@@ -66,7 +66,7 @@
     layoutObjects(target, currentEmoji);
 
     mascot.setText('いくつ あるかな？ かぞえてみよう！');
-    setTimeout(() => KidsApp.speak('いくつ あるかな？'), 300);
+    KidsApp.speak('いくつ あるかな？', 120);
 
     optionsEl.innerHTML = '';
     pickOptions(target).forEach((n) => {

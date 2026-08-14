@@ -137,7 +137,7 @@
     KidsApp.Sound.chime();
     KidsApp.AnimalSounds[a.key]();
     KidsApp.confettiBurst(container, a.x, a.y, 16);
-    setTimeout(() => KidsApp.speak(a.name + '、みつけた！'), 150);
+    KidsApp.speak(a.name + '、みつけた！', 100);
 
     if (roundFound >= ROUND_SIZE) {
       celebrating = true;
