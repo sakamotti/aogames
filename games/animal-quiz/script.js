@@ -27,6 +27,7 @@
   let target = null;
   let previousTarget = null;
   let locked = false;
+  let questionSequence = 0;
 
   function shuffle(arr) {
     return arr
@@ -36,6 +37,7 @@
   }
 
   function askQuestion() {
+    const sequence = ++questionSequence;
     locked = false;
     const candidates = ANIMALS.filter((a) => a !== previousTarget);
     target = KidsApp.choice(candidates);
@@ -57,15 +59,17 @@
     const prompt = `「${target.sound}」って なくのは だれかな？`;
     mascot.setText(prompt);
     setTimeout(() => {
+      if (sequence !== questionSequence || locked) return;
       KidsApp.AnimalSounds[target.sfx]();
-      setTimeout(() => KidsApp.speak('だれの こえかな？'), 500);
-    }, 300);
+      KidsApp.speak('だれの こえかな？', 320);
+    }, 120);
   }
 
   function onPick(animal, card) {
     if (locked) return;
     if (animal === target) {
       locked = true;
+      questionSequence++;
       card.classList.add('choice-correct');
       [...optionsEl.children].forEach((c) => {
         if (c !== card) c.classList.add('choice-dim');
@@ -91,7 +95,7 @@
   repeatSound.addEventListener('pointerdown', () => {
     if (!target) return;
     KidsApp.AnimalSounds[target.sfx]();
-    setTimeout(() => KidsApp.speak('だれの こえかな？'), 450);
+    KidsApp.speak('だれの こえかな？', 300);
   });
 
   askQuestion();

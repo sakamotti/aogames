@@ -69,7 +69,7 @@
       optionsEl.appendChild(option);
     });
     mascot.setText('ならびかたを みてね。つぎは どれかな？');
-    setTimeout(() => KidsApp.speak('ならびかたを みてね。つぎは どれかな？'), 250);
+    KidsApp.speak('ならびかたを みてね。つぎは どれかな？', 120);
   }
 
   function choose(symbol, option, missing) {
