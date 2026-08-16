@@ -47,6 +47,17 @@ html.kidsapp-power-save *::after {
   animation-play-state: paused !important;
 }
 
+/* A dark idle cover also cuts emitted light on OLED phones. It deliberately
+   ignores pointer input so the first tap still reaches the game and wakes it. */
+html.kidsapp-power-save::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 2147483646;
+  pointer-events: none;
+  background: rgba(0, 0, 0, 0.68);
+}
+
 * {
   box-sizing: border-box;
 }
