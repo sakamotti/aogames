@@ -110,7 +110,6 @@
       const dx = Math.cos(t * 0.9 + b.phase) * 4;
       b.el.style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`;
     });
-    requestAnimationFrame(animate);
   }
 
   let resizeTimer = null;
@@ -121,5 +120,5 @@
   window.addEventListener('orientationchange', () => setTimeout(layout, 250));
 
   layout();
-  requestAnimationFrame(animate);
+  KidsApp.startAnimationLoop(animate);
 })();

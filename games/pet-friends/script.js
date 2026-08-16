@@ -307,6 +307,7 @@
 
   function scheduleIdle() {
     clearTimeout(idleTimer);
+    if (KidsApp.isPowerSaving()) return;
     idleTimer = setTimeout(() => {
       if (activePointer === null && !feeding) {
         els.petActor.classList.add('bounce');
@@ -317,6 +318,11 @@
       scheduleIdle();
     }, KidsApp.rand(6200, 9800));
   }
+
+  document.addEventListener('kidsapp:powerchange', (event) => {
+    clearTimeout(idleTimer);
+    if (!event.detail.saving) scheduleIdle();
+  });
 
   renderAffection();
   loadPetImages();

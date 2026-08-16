@@ -107,7 +107,6 @@
       ctx.restore();
     });
 
-    requestAnimationFrame(frame);
   }
 
   function drawBubble(ctx, x, y, r, color) {
@@ -129,5 +128,5 @@
   }
 
   for (let i = 0; i < 6; i++) spawnBubble(true);
-  requestAnimationFrame(frame);
+  KidsApp.startAnimationLoop(frame);
 })();

@@ -121,9 +121,8 @@
 
     if (particles.length > 900) particles.splice(0, particles.length - 900);
 
-    requestAnimationFrame(frame);
   }
-  requestAnimationFrame(frame);
+  KidsApp.startAnimationLoop(frame);
 
   setTimeout(() => launch(stage.width / 2, stage.height * 0.35), 500);
 })();
