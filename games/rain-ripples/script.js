@@ -83,7 +83,6 @@
       ctx.restore();
     });
 
-    requestAnimationFrame(frame);
   }
-  requestAnimationFrame(frame);
+  KidsApp.startAnimationLoop(frame);
 })();

@@ -39,6 +39,14 @@
   --safe-bottom-gap: 56px;
 }
 
+/* Stop decorative CSS loops when the app has been left untouched. Canvas
+   loops and audio are paused by shared/app.js at the same time. */
+html.kidsapp-power-save *,
+html.kidsapp-power-save *::before,
+html.kidsapp-power-save *::after {
+  animation-play-state: paused !important;
+}
+
 * {
   box-sizing: border-box;
 }

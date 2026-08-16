@@ -792,6 +792,99 @@
   function choice(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
 
   // ---------------------------------------------------------------------
+  // Power saving: canvas games used to redraw at the display refresh rate
+  // forever, even when nobody was touching the screen. Cap active rendering
+  // at 30fps and stop animation/audio completely after a minute of inactivity
+  // or while the page is in the background. The next tap wakes everything
+  // before the game's own pointer handler runs.
+  // ---------------------------------------------------------------------
+  const POWER_SAVE_AFTER_MS = 60 * 1000;
+  const animationLoops = new Set();
+  let powerSaveTimer = null;
+  let powerSaving = document.visibilityState === 'hidden';
+
+  function notifyPowerChange() {
+    document.documentElement.classList.toggle('kidsapp-power-save', powerSaving);
+    document.dispatchEvent(new CustomEvent('kidsapp:powerchange', {
+      detail: { saving: powerSaving },
+    }));
+  }
+
+  function setPowerSaving(next) {
+    if (powerSaving === next) return;
+    powerSaving = next;
+    if (powerSaving) {
+      audioUnlocked = false;
+      cancelSpeech();
+      Object.values(animalClipCache).forEach((el) => el.pause());
+      if (ctx && ctx.state === 'running') ctx.suspend().catch(() => {});
+      animationLoops.forEach((loop) => loop.pause());
+    } else {
+      animationLoops.forEach((loop) => loop.wake());
+    }
+    notifyPowerChange();
+  }
+
+  function schedulePowerSave() {
+    if (powerSaveTimer) clearTimeout(powerSaveTimer);
+    powerSaveTimer = setTimeout(() => setPowerSaving(true), POWER_SAVE_AFTER_MS);
+  }
+
+  function markActivity() {
+    setPowerSaving(false);
+    schedulePowerSave();
+  }
+
+  function startAnimationLoop(render, opts = {}) {
+    const fps = Math.max(1, Math.min(60, Number(opts.fps) || 30));
+    const interval = 1000 / fps;
+    let timeoutId = null;
+    let rafId = null;
+    let stopped = false;
+
+    function clearScheduled() {
+      if (timeoutId !== null) global.clearTimeout(timeoutId);
+      if (rafId !== null) global.cancelAnimationFrame(rafId);
+      timeoutId = null;
+      rafId = null;
+    }
+
+    function frame(now) {
+      rafId = null;
+      if (stopped || powerSaving || document.hidden) return;
+      render(now);
+      timeoutId = global.setTimeout(() => {
+        timeoutId = null;
+        rafId = global.requestAnimationFrame(frame);
+      }, Math.max(0, interval - 8));
+    }
+
+    const loop = {
+      pause() {
+        clearScheduled();
+      },
+      wake() {
+        clearScheduled();
+        if (!stopped && !powerSaving && !document.hidden) {
+          rafId = global.requestAnimationFrame(frame);
+        }
+      },
+    };
+    animationLoops.add(loop);
+    loop.wake();
+
+    return function stop() {
+      stopped = true;
+      loop.pause();
+      animationLoops.delete(loop);
+    };
+  }
+
+  function isPowerSaving() {
+    return powerSaving;
+  }
+
+  // ---------------------------------------------------------------------
   // Original mascot cast (NOT any existing licensed character) used as a
   // friendly "host" in quiz/counting style games.
   // ---------------------------------------------------------------------
@@ -853,17 +946,21 @@
     document.addEventListener(
       'pointerdown',
       () => {
+        markActivity();
         Sound.unlock();
       },
       { passive: true, capture: true }
     );
     document.addEventListener('visibilitychange', () => {
       if (document.visibilityState === 'hidden') {
-        audioUnlocked = false;
-        cancelSpeech();
-        Object.values(animalClipCache).forEach((el) => el.pause());
+        setPowerSaving(true);
+      } else {
+        markActivity();
       }
     });
+    global.addEventListener('pagehide', () => setPowerSaving(true));
+    notifyPowerChange();
+    schedulePowerSave();
     if (opts.home !== false) {
       initHomeButton();
       trapBackNavigation();
@@ -888,6 +985,8 @@
     initCommon,
     rand,
     choice,
+    startAnimationLoop,
+    isPowerSaving,
     CHARACTERS,
     mascotBubble,
     createAdaptive,

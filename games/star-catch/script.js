@@ -128,10 +128,9 @@
       ctx.restore();
     });
 
-    requestAnimationFrame(frame);
   }
 
   updateJar();
   for (let i = 0; i < 3; i++) spawn();
-  requestAnimationFrame(frame);
+  KidsApp.startAnimationLoop(frame);
 })();

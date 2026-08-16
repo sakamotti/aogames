@@ -281,12 +281,11 @@
       });
     }
 
-    requestAnimationFrame(frame);
   }
 
   initStars();
   preloadImages().then(() => {
     placeAnimals();
-    requestAnimationFrame(frame);
+    KidsApp.startAnimationLoop(frame);
   });
 })();
