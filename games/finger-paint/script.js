@@ -1,5 +1,6 @@
 (function () {
   KidsApp.initCommon();
+  KidsApp.BGM.start('calm');
 
   const canvas = document.getElementById('c');
   const stage = KidsApp.setupCanvas(canvas);

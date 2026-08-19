@@ -2,6 +2,7 @@
   'use strict';
 
   KidsApp.initCommon();
+  KidsApp.BGM.start('calm');
 
   const PETS = {
     cat: {

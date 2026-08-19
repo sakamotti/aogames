@@ -461,11 +461,116 @@
 
   const notes = { C: 261.63, D: 293.66, E: 329.63, F: 349.23, G: 392.0, A: 440.0, B: 493.88, C2: 523.25, D2: 587.33, E2: 659.25 };
 
+  // A quiet, offline music-box loop for calm screens. One oscillator plays
+  // at a time, keeping CPU use tiny; speech temporarily ducks the master gain
+  // so instructions and praise always remain clear.
+  const BGM_VOLUME = 0.035;
+  const BGM_DUCKED_VOLUME = 0.009;
+  const BGM_BEAT_MS = 560;
+  const BGM_MELODIES = {
+    calm: [
+      [523.25, 1], [659.25, 1], [783.99, 2], [659.25, 1], [587.33, 1], [523.25, 2],
+      [440.00, 1], [523.25, 1], [587.33, 2], [523.25, 1], [440.00, 1], [392.00, 2],
+      [523.25, 1], [587.33, 1], [659.25, 2], [587.33, 1], [523.25, 1], [440.00, 2],
+      [392.00, 1], [440.00, 1], [523.25, 2], [0, 1], [392.00, 1], [523.25, 2],
+    ],
+  };
+  let bgmWanted = false;
+  let bgmTheme = 'calm';
+  let bgmIndex = 0;
+  let bgmTimer = null;
+  let bgmMaster = null;
+  let bgmDucked = false;
+
+  function ensureBgmMaster(audio) {
+    if (!bgmMaster) {
+      bgmMaster = audio.createGain();
+      bgmMaster.gain.value = BGM_VOLUME;
+      bgmMaster.connect(audio.destination);
+    }
+    return bgmMaster;
+  }
+
+  function setBgmDucked(ducked) {
+    bgmDucked = ducked;
+    if (!bgmMaster || !ctx) return;
+    const target = ducked ? BGM_DUCKED_VOLUME : BGM_VOLUME;
+    bgmMaster.gain.cancelScheduledValues(ctx.currentTime);
+    bgmMaster.gain.setTargetAtTime(target, ctx.currentTime, 0.08);
+  }
+
+  function playNextBgmNote() {
+    bgmTimer = null;
+    if (!bgmWanted || isMuted() || !audioUnlocked || powerSaving || document.hidden) return;
+    const melody = BGM_MELODIES[bgmTheme] || BGM_MELODIES.calm;
+    const [frequency, beats] = melody[bgmIndex % melody.length];
+    bgmIndex++;
+    const durationMs = BGM_BEAT_MS * beats;
+    const audio = getCtx();
+    if (!audio || audio.state !== 'running') return;
+
+    const master = ensureBgmMaster(audio);
+    master.gain.cancelScheduledValues(audio.currentTime);
+    master.gain.setTargetAtTime(bgmDucked ? BGM_DUCKED_VOLUME : BGM_VOLUME, audio.currentTime, 0.05);
+    if (frequency > 0) {
+      const oscillator = audio.createOscillator();
+      const envelope = audio.createGain();
+      const startAt = audio.currentTime;
+      const noteDuration = Math.max(0.18, durationMs / 1000 - 0.08);
+      oscillator.type = 'triangle';
+      oscillator.frequency.value = frequency;
+      envelope.gain.setValueAtTime(0.0001, startAt);
+      envelope.gain.exponentialRampToValueAtTime(0.75, startAt + 0.025);
+      envelope.gain.exponentialRampToValueAtTime(0.0001, startAt + noteDuration);
+      oscillator.connect(envelope).connect(master);
+      oscillator.start(startAt);
+      oscillator.stop(startAt + noteDuration + 0.03);
+    }
+    bgmTimer = global.setTimeout(playNextBgmNote, durationMs);
+  }
+
+  function pauseBgm() {
+    if (bgmTimer !== null) global.clearTimeout(bgmTimer);
+    bgmTimer = null;
+    if (bgmMaster && ctx) {
+      bgmMaster.gain.cancelScheduledValues(ctx.currentTime);
+      bgmMaster.gain.setTargetAtTime(0.0001, ctx.currentTime, 0.04);
+    }
+  }
+
+  function resumeBgm() {
+    if (!bgmWanted || bgmTimer !== null || isMuted() || !audioUnlocked || powerSaving || document.hidden) return;
+    const audio = getCtx();
+    if (!audio) return;
+    const begin = () => {
+      if (!bgmWanted || bgmTimer !== null || isMuted() || !audioUnlocked || powerSaving || document.hidden) return;
+      // Avoid a music blip when the first home-screen tap is navigation.
+      bgmTimer = global.setTimeout(playNextBgmNote, 220);
+    };
+    if (audio.state === 'running') begin();
+    else audio.resume().then(begin).catch(() => {});
+  }
+
+  const BGM = {
+    start(theme = 'calm') {
+      bgmTheme = BGM_MELODIES[theme] ? theme : 'calm';
+      bgmWanted = true;
+      resumeBgm();
+    },
+    stop() {
+      bgmWanted = false;
+      pauseBgm();
+    },
+    resume: resumeBgm,
+    pause: pauseBgm,
+  };
+
   const Sound = {
     unlock() {
       audioUnlocked = true;
       getCtx();
       if (global.speechSynthesis) global.speechSynthesis.resume();
+      BGM.resume();
     },
     pop() { playTone({ freq: 500, glideTo: 900, duration: 0.18, type: 'sine', gain: 0.22 }); },
     tap() { playTone({ freq: 320, duration: 0.09, type: 'sine', gain: 0.12 }); },
@@ -512,6 +617,7 @@
     if (speechTimer) clearTimeout(speechTimer);
     speechTimer = null;
     if (global.speechSynthesis) global.speechSynthesis.cancel();
+    setBgmDucked(false);
   }
   function speak(text, delay = 0) {
     if (isMuted() || !audioUnlocked || !global.speechSynthesis) return;
@@ -529,6 +635,12 @@
       if (jaVoice) u.voice = jaVoice;
       u.rate = 0.85;
       u.pitch = 1.15;
+      const restoreBgm = () => {
+        if (sequence === speechSequence) setBgmDucked(false);
+      };
+      u.onend = restoreBgm;
+      u.onerror = restoreBgm;
+      setBgmDucked(true);
       global.speechSynthesis.resume();
       global.speechSynthesis.speak(u);
     };
@@ -666,6 +778,7 @@
       if (isMuted()) {
         cancelSpeech();
         Object.values(animalClipCache).forEach((el) => el.pause());
+        BGM.pause();
       } else {
         Sound.unlock();
         Sound.tap();
@@ -817,6 +930,7 @@
       audioUnlocked = false;
       cancelSpeech();
       Object.values(animalClipCache).forEach((el) => el.pause());
+      BGM.pause();
       if (ctx && ctx.state === 'running') ctx.suspend().catch(() => {});
       animationLoops.forEach((loop) => loop.pause());
     } else {
@@ -973,6 +1087,7 @@
   global.KidsApp = {
     BASE,
     Sound,
+    BGM,
     speak,
     isMuted,
     setMuted,
