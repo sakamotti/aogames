@@ -66,6 +66,18 @@ for (const required of [
   if (!sharedApp.includes(required)) errors.push(`shared/app.js missing power-saving control ${required}`);
 }
 
+const bgmScreens = [
+  ['index.html', launcher],
+  ['games/finger-paint/script.js', fs.readFileSync(path.join(root, 'games/finger-paint/script.js'), 'utf8')],
+  ['games/pet-friends/script.js', fs.readFileSync(path.join(root, 'games/pet-friends/script.js'), 'utf8')],
+];
+for (const [relative, source] of bgmScreens) {
+  if (!source.includes("KidsApp.BGM.start('calm')")) errors.push(`${relative} is missing calm BGM`);
+}
+for (const required of ['BGM_MELODIES', 'setBgmDucked', 'pauseBgm', 'resumeBgm']) {
+  if (!sharedApp.includes(required)) errors.push(`shared/app.js missing BGM control ${required}`);
+}
+
 if (errors.length) {
   errors.forEach((error) => console.error(error));
   process.exit(1);
