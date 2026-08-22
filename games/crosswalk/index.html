@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#dff4ff">
+<title>おうだんほどう - あそびばこ</title>
+<link rel="manifest" href="../../manifest.json">
+<link rel="icon" href="../../icons/favicon-32.png" sizes="32x32">
+<link rel="stylesheet" href="../../shared/style.css">
+<style>
+  body { background: #dff4ff; overflow: hidden; }
+  .crosswalk-stage { background: #dff4ff; }
+  .crosswalk-hud {
+    position: fixed;
+    z-index: 20;
+    top: calc(var(--safe-top) + 70px);
+    left: 50%;
+    transform: translateX(-50%);
+    width: min(560px, calc(100vw - 150px));
+    min-height: 64px;
+    display: grid;
+    grid-template-columns: 48px minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 9px;
+    padding: 8px 14px;
+    border: 3px solid rgba(255,255,255,.92);
+    border-radius: 24px;
+    background: rgba(255,255,255,.94);
+    box-shadow: var(--shadow-soft);
+    pointer-events: none;
+  }
+  .crosswalk-signal { font-size: 34px; text-align: center; }
+  .crosswalk-prompt {
+    color: var(--ink);
+    font-size: clamp(15px, 4vw, 22px);
+    line-height: 1.15;
+    text-align: center;
+  }
+  .crosswalk-medals {
+    min-width: 54px;
+    color: #7a5a12;
+    font-size: clamp(15px, 3.5vw, 20px);
+    white-space: nowrap;
+  }
+  .crosswalk-hint {
+    position: fixed;
+    z-index: 20;
+    left: 50%;
+    bottom: calc(var(--safe-bottom) + var(--safe-bottom-gap) + 8px);
+    transform: translateX(-50%) translateY(10px);
+    width: min(420px, calc(100vw - 24px));
+    padding: 10px 16px;
+    border-radius: 999px;
+    background: rgba(255,255,255,.95);
+    box-shadow: var(--shadow-soft);
+    color: var(--ink);
+    font-size: clamp(15px, 4vw, 20px);
+    text-align: center;
+    opacity: 0;
+    transition: opacity .2s ease, transform .2s ease;
+    pointer-events: none;
+  }
+  .crosswalk-hint.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  @media (orientation: landscape) and (max-height: 560px) {
+    .crosswalk-hud {
+      top: calc(var(--safe-top) + 10px);
+      min-height: 52px;
+      width: min(500px, calc(100vw - 170px));
+      padding: 5px 12px;
+    }
+    .crosswalk-signal { font-size: 28px; }
+    .crosswalk-hint { right: calc(var(--safe-right) + 12px); left: auto; bottom: calc(var(--safe-bottom) + 12px); transform: none; width: 310px; }
+    .crosswalk-hint.show { transform: none; }
+  }
+</style>
+</head>
+<body>
+  <main class="stage crosswalk-stage">
+    <canvas id="crosswalkCanvas" class="play-canvas" aria-label="信号を見て横断歩道を渡るゲーム"></canvas>
+    <div class="crosswalk-hud" role="status" aria-live="polite">
+      <span class="crosswalk-signal" id="signalIcon">🔴</span>
+      <span class="crosswalk-prompt" id="prompt">あかは とまろう</span>
+      <span class="crosswalk-medals" id="medals">⭐ 0</span>
+    </div>
+    <div class="crosswalk-hint" id="gestureHint">☝️ こどもを うえに なぞってね</div>
+  </main>
+  <script src="../../shared/app.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
