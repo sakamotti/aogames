@@ -44,6 +44,7 @@ for (const htmlFile of htmlFiles) {
 const continuousAnimationGames = [
   'bubble-pop',
   'color-hunt',
+  'crosswalk',
   'fireworks',
   'night-safari',
   'rain-ripples',
