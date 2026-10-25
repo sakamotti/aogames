@@ -1,0 +1,1 @@
+ChallengeGames.start('animal-detective');

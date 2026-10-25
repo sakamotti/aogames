@@ -1,0 +1,1 @@
+ChallengeGames.start('bento');

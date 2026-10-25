@@ -1057,6 +1057,15 @@
   }
 
   function initCommon(opts = {}) {
+    const gameId = global.location.pathname.match(/\/games\/([^/]+)\//)?.[1];
+    if (gameId) {
+      try {
+        const key = 'asobibako_journey_v1';
+        const data = JSON.parse(localStorage.getItem(key)) || {};
+        data.recent = [gameId, ...(data.recent || []).filter(id => id !== gameId)].slice(0, 4);
+        localStorage.setItem(key, JSON.stringify(data));
+      } catch (_) { /* Play remains available when device storage is unavailable. */ }
+    }
     document.addEventListener(
       'pointerdown',
       () => {

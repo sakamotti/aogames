@@ -2,13 +2,30 @@
 // (the whole point: this app is meant to be used out and about).
 // Paths are relative to this file's own location, so it works whether the
 // site is hosted at a domain root or a GitHub Pages project subpath.
-const CACHE_VERSION = 'v40';
+const CACHE_VERSION = 'v41';
 const CACHE_NAME = `asobibako-${CACHE_VERSION}`;
 
 const PRECACHE_URLS = [
   './',
   'index.html',
   'manifest.json',
+  'shared/catalog.js',
+  'shared/home.js',
+  'shared/challenge.css',
+  'shared/challenge-models.js',
+  'shared/challenge.js',
+  'games/shopping/index.html',
+  'games/shopping/script.js',
+  'games/animal-path/index.html',
+  'games/animal-path/script.js',
+  'games/robot-code/index.html',
+  'games/robot-code/script.js',
+  'games/bento/index.html',
+  'games/bento/script.js',
+  'games/animal-detective/index.html',
+  'games/animal-detective/script.js',
+  'games/balance/index.html',
+  'games/balance/script.js',
   'shared/app.js',
   'shared/style.css',
   'icons/icon-192.png',
