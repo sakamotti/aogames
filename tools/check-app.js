@@ -16,6 +16,22 @@ const gameDirs = fs.readdirSync(gamesRoot, { withFileTypes: true })
   .map((entry) => entry.name)
   .sort();
 
+// The rendered library and the offline shell must describe the same games.
+const vm = require('vm');
+const catalogContext = { window: {}, localStorage: { getItem: () => null, setItem() {} } };
+vm.runInNewContext(fs.readFileSync(path.join(root, 'shared/catalog.js'), 'utf8'), catalogContext);
+const catalogGames = catalogContext.window.PlayCatalog.games;
+const catalogIds = Array.from(catalogGames, game => game.id).sort();
+if (JSON.stringify(catalogIds) !== JSON.stringify(gameDirs)) errors.push('catalog IDs do not match game directories');
+if (catalogGames.filter(game => game.isNew).length !== 6) errors.push('expected six new thinking games');
+for (const relative of ['shared/catalog.js', 'shared/home.js', 'shared/challenge.js', 'shared/challenge-models.js', 'shared/challenge.css']) {
+  if (!serviceWorker.includes(`'${relative}'`)) errors.push(`not precached ${relative}`);
+}
+for (const game of catalogGames.filter(game => game.isNew)) {
+  const source = fs.readFileSync(path.join(gamesRoot, game.id, 'script.js'), 'utf8');
+  if (!source.includes(`ChallengeGames.start('${game.id}')`)) errors.push(`incorrect entry point ${game.id}`);
+}
+
 for (const game of gameDirs) {
   for (const file of ['index.html', 'script.js']) {
     const relative = `games/${game}/${file}`;
@@ -68,7 +84,7 @@ for (const required of [
 }
 
 const bgmScreens = [
-  ['index.html', launcher],
+  ['shared/home.js', fs.readFileSync(path.join(root, 'shared/home.js'), 'utf8')],
   ['games/finger-paint/script.js', fs.readFileSync(path.join(root, 'games/finger-paint/script.js'), 'utf8')],
   ['games/pet-friends/script.js', fs.readFileSync(path.join(root, 'games/pet-friends/script.js'), 'utf8')],
 ];

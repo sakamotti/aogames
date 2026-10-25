@@ -1,0 +1,499 @@
+/* Shared playroom for the six thinking games and the new library. */
+body.playroom {
+  position: static;
+  overflow-y: auto;
+  height: auto;
+  min-height: 100dvh;
+  touch-action: pan-y;
+  background: #f7f5ed;
+  color: #263e46;
+  font-weight: 600;
+  --ink: #263e46;
+  --ink-soft: #667b80;
+  --shadow-soft: 0 6px 18px #263e4610;
+}
+.playroom button,
+.playroom a {
+  touch-action: manipulation;
+}
+.playroom button {
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+.playroom button:focus-visible,
+.playroom a:focus-visible {
+  outline: 4px solid #176e86;
+  outline-offset: 4px;
+}
+.playroom button:disabled {
+  cursor: default;
+  opacity: 0.6;
+}
+.playroom .room {
+  max-width: 1040px;
+  margin: auto;
+  padding: calc(env(safe-area-inset-top) + 28px) 20px
+    calc(env(safe-area-inset-bottom) + 90px);
+}
+.room-brand {
+  font-size: 13px;
+  letter-spacing: 0.18em;
+  color: #577375;
+  margin: 0 0 8px;
+}
+.room h1 {
+  font-size: clamp(25px, 5vw, 40px);
+  letter-spacing: 0.02em;
+  margin: 0 0 10px;
+  line-height: 1.4;
+}
+.room p {
+  line-height: 1.7;
+}
+.room .muted {
+  color: #667b80;
+  font-size: 13px;
+}
+.room .topline {
+  padding-right: 68px;
+}
+.room .eyebrow {
+  display: inline-block;
+  padding: 5px 12px;
+  border-radius: 20px;
+  background: #e1eee6;
+  color: #336b54;
+  font-size: 12px;
+  margin-bottom: 12px;
+}
+.room .filters,
+.room .toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 18px 0;
+  align-items: center;
+}
+.room button.pill {
+  border: 1px solid #d0dbd7;
+  background: #fff;
+  border-radius: 18px;
+  min-height: 48px;
+  padding: 10px 16px;
+  font-size: 14px;
+}
+.room button[aria-pressed='true'] {
+  background: #235f64;
+  color: #fff;
+  border-color: #235f64;
+}
+.room .section-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 32px 0 14px;
+  font-size: 20px;
+}
+.room .cards {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+.room .game-card {
+  background: #fff;
+  border: 1px solid #e1e6df;
+  border-radius: 24px;
+  position: relative;
+  box-shadow: 0 5px 0 #e8ebe2;
+  overflow: hidden;
+}
+.room .game-card a {
+  display: block;
+  padding: 22px 18px 16px;
+  color: inherit;
+  text-decoration: none;
+  min-height: 192px;
+}
+.room .game-card .icon {
+  display: block;
+  font-size: 44px;
+  margin-bottom: 12px;
+}
+.room .game-card h3 {
+  font-size: 17px;
+  margin: 0 28px 6px 0;
+}
+.room .game-card p {
+  font-size: 12px;
+  margin: 0;
+  color: #667b80;
+}
+.room .game-card .meta {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-top: 14px;
+  font-size: 11px;
+  color: #617378;
+}
+.room .badge {
+  background: #ffedbf;
+  color: #76551c;
+  padding: 3px 8px;
+  border-radius: 8px;
+}
+.room .favorite {
+  position: absolute;
+  right: 10px;
+  top: 12px;
+  min-width: 48px;
+  min-height: 48px;
+  border: 0;
+  background: #f6f5ef;
+  border-radius: 50%;
+  font-size: 22px;
+}
+.room .favorite[aria-pressed='true'] {
+  background: #fff0c7;
+  color: #826000;
+}
+.room .hero {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: 24px;
+  background: #e0ece4;
+  border-radius: 28px;
+  padding: 28px;
+  margin: 22px 0;
+}
+.room .hero p {
+  margin: 8px 0;
+  font-size: 14px;
+}
+.room .hero-art {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 64px;
+  letter-spacing: 10px;
+}
+.room .shelf-note {
+  border-top: 1px solid #d8e1d9;
+  margin-top: 36px;
+  padding-top: 20px;
+  font-size: 12px;
+  color: #607378;
+}
+.room .empty {
+  padding: 24px;
+  border: 2px dashed #d4ded7;
+  border-radius: 20px;
+}
+.room .challenge-head {
+  padding-left: 58px;
+  padding-right: 60px;
+}
+.room .challenge-head h1 {
+  font-size: clamp(21px, 4vw, 30px);
+}
+.room nav.toolbar {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.room nav.toolbar button.pill {
+  padding: 10px 4px;
+  font-size: 12px;
+}
+.room .challenge-panel {
+  background: #fff;
+  border: 1px solid #e1e6df;
+  border-radius: 28px;
+  padding: 22px;
+  margin: 18px 0;
+  box-shadow: 0 6px 0 #e8ebe2;
+}
+.room .instruction {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.room .instruction img {
+  width: 52px;
+  height: 52px;
+  object-fit: contain;
+}
+.room #prompt {
+  margin: 0;
+  font-size: 17px;
+  flex: 1;
+}
+.room .primary {
+  min-height: 54px;
+  border: 0;
+  border-radius: 17px;
+  background: #235f64;
+  color: white;
+  padding: 12px 22px;
+  font-size: 17px;
+  box-shadow: 0 4px 0 #16484c;
+}
+.room .secondary {
+  min-height: 52px;
+  border: 1px solid #cddbd5;
+  border-radius: 16px;
+  background: #f2f6f1;
+  padding: 10px 16px;
+}
+.room .actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-top: 18px;
+}
+.room .items {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin: 18px 0;
+}
+.room .item {
+  min-width: 72px;
+  min-height: 76px;
+  border: 2px solid #d9e3db;
+  background: #f8faf5;
+  border-radius: 18px;
+  padding: 10px;
+  font-size: 30px;
+}
+.room .item small {
+  display: block;
+  font-size: 12px;
+  margin-top: 4px;
+}
+.room .order {
+  padding: 16px;
+  border-radius: 18px;
+  background: #fff5d9;
+  min-height: 68px;
+  font-size: 20px;
+  text-align: center;
+  line-height: 1.8;
+}
+.room .basket {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+  padding: 16px;
+  min-height: 88px;
+  border: 2px dashed #c8d8cf;
+  border-radius: 18px;
+  margin-top: 14px;
+}
+.room .grid-board {
+  display: grid;
+  gap: 6px;
+  max-width: 450px;
+  margin: 18px auto;
+}
+.room .cell {
+  padding: 0;
+  aspect-ratio: 1;
+  min-width: 0;
+  min-height: 48px;
+  border: 2px solid #d6e1d8;
+  background: #eef5e9;
+  border-radius: 12px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 30px;
+}
+.room .cell svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+.room .cell .marker {
+  position: absolute;
+  font-size: 22px;
+  pointer-events: none;
+  background: #ffffffdf;
+  border-radius: 50%;
+  padding: 2px;
+}
+.room .cell.rock {
+  background: #e5e5df;
+}
+.room .cell.current {
+  background: #d6edeb;
+  border-color: #2e7b80;
+}
+.room .commands {
+  min-height: 70px;
+  background: #eff4ef;
+  border-radius: 18px;
+  padding: 12px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 18px 0;
+}
+.room .command {
+  padding: 10px;
+  min-height: 48px;
+  border: 1px solid #c8d9cf;
+  border-radius: 10px;
+  background: #fff;
+  font-size: 20px;
+}
+.room .command.active {
+  background: #ffdf8e;
+}
+.room .lunch {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  max-width: 420px;
+  background: #ecc8ac;
+  border: 7px solid #a87855;
+  border-radius: 22px;
+  padding: 10px;
+  margin: 18px auto;
+}
+.room .lunch.four {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.room .lunch .slot {
+  min-height: 74px;
+  border: 0;
+  border-radius: 12px;
+  background: #fff5e6;
+  font-size: 32px;
+}
+.room .lunch .slot.selected {
+  outline: 4px solid #235f64;
+  outline-offset: 1px;
+}
+.room .hint-list {
+  display: grid;
+  gap: 8px;
+  list-style: none;
+  padding: 0;
+}
+.room .hint-list li {
+  border-radius: 14px;
+  padding: 12px;
+  background: #f0f5ea;
+  font-size: 17px;
+}
+.room .scale {
+  position: relative;
+  margin: 30px auto 16px;
+  max-width: 500px;
+  padding-bottom: 26px;
+}
+.room .scale-pans {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 22px;
+  transform: rotate(var(--tilt, 0deg));
+  transition: transform 0.3s;
+}
+.room .pan {
+  background: #eff4ed;
+  border: 3px solid #9db8ab;
+  border-top: 0;
+  border-radius: 0 0 30px 30px;
+  min-height: 100px;
+  padding: 16px;
+  text-align: center;
+  font-size: 26px;
+}
+.room .scale::after {
+  content: '▲';
+  position: absolute;
+  bottom: 0;
+  left: calc(50% - 15px);
+  font-size: 30px;
+  color: #41736b;
+}
+.room .feedback {
+  padding: 18px;
+  margin-top: 18px;
+  background: #e1f1e6;
+  border-radius: 18px;
+  text-align: center;
+}
+.room .feedback p {
+  margin: 4px 0 12px;
+  font-size: 20px;
+}
+.room .progress-text {
+  color: #53756b;
+  font-size: 13px;
+}
+.room .key {
+  text-align: center;
+  font-size: 16px;
+  padding: 12px;
+  background: #fff6dc;
+  border-radius: 14px;
+}
+.room [hidden] {
+  display: none !important;
+}
+@media (max-width: 650px) {
+  .room .cards {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+  .playroom .room {
+    padding-left: 14px;
+    padding-right: 14px;
+  }
+  .room .hero {
+    grid-template-columns: 1fr;
+    padding: 22px;
+  }
+  .room .hero-art {
+    display: none;
+  }
+  .room .game-card a {
+    padding: 18px 12px;
+    min-height: 195px;
+  }
+  .room .game-card h3 {
+    font-size: 15px;
+  }
+  .room .challenge-panel {
+    padding: 16px;
+  }
+  .room .challenge-head {
+    padding-left: 55px;
+    padding-right: 45px;
+  }
+  .room #prompt {
+    font-size: 15px;
+  }
+  .room .item {
+    min-width: 66px;
+    min-height: 72px;
+  }
+  .room .cell {
+    font-size: 24px;
+  }
+  .room .cell .marker {
+    font-size: 17px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .room * {
+    transition: none !important;
+  }
+}

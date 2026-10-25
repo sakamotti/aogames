@@ -1,266 +1,107 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ja">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-<meta name="theme-color" content="#ffb84d">
-<meta name="description" content="4〜6歳向け・外出先でも遊べるオフライン対応の知育ミニゲーム集「あそびばこ」。くまた・みけ・ぴょんのなかまたちと一緒にあそぼう。">
-<title>あそびばこ</title>
-<link rel="manifest" href="manifest.json">
-<link rel="icon" href="icons/favicon-32.png" sizes="32x32">
-<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
-<link rel="stylesheet" href="shared/style.css">
-<style>
-  /* The base stylesheet sets touch-action:none on body for the games (which
-     drive every interaction themselves and never scroll) - but the launcher
-     is a plain scrolling list once there are more tiles than fit on one
-     screen, so it needs touch scrolling back, or a phone with a small/old
-     screen simply can't reach the games below the fold at all. min-height
-     falls back to 100vh first for browsers that don't understand dvh. */
-  body {
-    overflow-y: auto;
-    position: static;
-    min-height: 100vh;
-    min-height: 100dvh;
-    touch-action: pan-y;
-    -webkit-overflow-scrolling: touch;
-  }
-  .home-wrap {
-    min-height: 100vh;
-    min-height: 100dvh;
-    padding: calc(env(safe-area-inset-top, 0px) + 16px) 12px calc(env(safe-area-inset-bottom, 0px) + 24px);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-  }
-  .home-title {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    font-size: clamp(24px, 5.5vw, 36px);
-    margin: 0 0 4px;
-  }
-  .home-title img { width: 1.15em; height: 1.15em; border-radius: 26%; box-shadow: var(--shadow-soft); }
-  .home-sub {
-    margin: 0 0 12px;
-    font-size: clamp(13px, 3vw, 16px);
-    font-weight: 600;
-    color: var(--ink-soft);
-  }
-  .game-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(108px, 1fr));
-    gap: 12px;
-    width: 100%;
-    max-width: 800px;
-  }
-  .game-tile {
-    --tile-color: var(--pink);
-    background: var(--white);
-    border-radius: var(--radius-lg);
-    box-shadow: var(--shadow-soft);
-    padding: 10px 6px 8px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    aspect-ratio: 1 / 0.9;
-    transition: transform 0.1s ease-out;
-    border: 3px solid var(--tile-color);
-  }
-  .game-tile:active { transform: scale(0.94); }
-  .game-tile__emoji {
-    font-size: clamp(30px, 7vw, 44px);
-    line-height: 1;
-    margin-bottom: 6px;
-  }
-  .game-tile__char {
-    width: clamp(34px, 8vw, 48px);
-    height: clamp(34px, 8vw, 48px);
-    margin-bottom: 6px;
-  }
-  .game-tile__pet-pair {
-    display: flex;
-    align-items: flex-end;
-    justify-content: center;
-    height: clamp(36px, 8vw, 48px);
-    margin-bottom: 6px;
-  }
-  .game-tile__pet-pair img {
-    width: clamp(34px, 8vw, 48px);
-    height: clamp(34px, 8vw, 48px);
-    object-fit: contain;
-    filter: drop-shadow(0 4px 3px rgba(74, 59, 120, 0.16));
-  }
-  .game-tile__pet-pair img + img { margin-left: clamp(-11px, -2vw, -7px); }
-  .friends-row {
-    display: flex;
-    gap: 10px;
-    margin-bottom: 12px;
-  }
-  .friends-row img {
-    width: 38px;
-    height: 38px;
-    border-radius: 50%;
-    background: var(--white);
-    box-shadow: var(--shadow-soft);
-    padding: 2px;
-  }
-  .game-tile__label {
-    font-size: clamp(12px, 3vw, 16px);
-    color: var(--ink);
-    text-align: center;
-  }
-  .home-footer {
-    margin-top: 26px;
-    font-size: 12px;
-    color: var(--ink-soft);
-    text-align: center;
-    max-width: 480px;
-    line-height: 1.6;
-  }
-  .version-tag {
-    margin-top: 10px;
-    font-size: 11px;
-    color: var(--ink-soft);
-    opacity: 0.6;
-    text-align: center;
-  }
-
-  /* Smaller/older phones and landscape orientation (short viewport height)
-     both need the tiles to shrink so more fit per screen - scrolling works
-     now, but the fewer screenfuls it takes to see every game, the better. */
-  @media (max-width: 380px), (max-height: 480px) {
-    .home-wrap { padding-top: calc(env(safe-area-inset-top, 0px) + 12px); }
-    .home-title { font-size: clamp(20px, 5.5vw, 28px); margin-bottom: 2px; }
-    .home-sub { margin-bottom: 10px; }
-    .friends-row { gap: 10px; margin-bottom: 10px; }
-    .friends-row img { width: 36px; height: 36px; }
-    .game-grid { grid-template-columns: repeat(auto-fit, minmax(92px, 1fr)); gap: 8px; }
-    .game-tile { padding: 8px 5px 7px; aspect-ratio: 1 / 0.88; }
-    .game-tile__emoji { font-size: clamp(26px, 7vw, 34px); margin-bottom: 5px; }
-    .game-tile__char { width: clamp(30px, 7vw, 38px); height: clamp(30px, 7vw, 38px); margin-bottom: 5px; }
-    .game-tile__pet-pair { height: 38px; margin-bottom: 5px; }
-    .game-tile__pet-pair img { width: 38px; height: 38px; }
-    .game-tile__label { font-size: clamp(11px, 2.8vw, 14px); }
-    .home-footer { margin-top: 16px; }
-  }
-
-  /* Landscape phones specifically: widen the grid's max-width so the extra
-     horizontal room is used for more columns instead of wasted side margin. */
-  @media (orientation: landscape) {
-    .game-grid { max-width: 1100px; }
-  }
-</style>
-</head>
-<body>
-  <div class="home-wrap">
-    <h1 class="home-title"><img src="icons/icon-192.png" alt=""> あそびばこ</h1>
-    <p class="home-sub">くまた・みけ・ぴょんと いっしょに あそぼう！</p>
-    <div class="friends-row">
-      <img src="icons/characters/kuma.png" alt="くまた">
-      <img src="icons/characters/neko.png" alt="みけ">
-      <img src="icons/characters/usagi.png" alt="ぴょん">
-    </div>
-
-    <div class="game-grid">
-      <a class="game-tile" style="--tile-color:var(--pink)" href="games/bubble-pop/index.html">
-        <div class="game-tile__emoji">🫧</div>
-        <div class="game-tile__label">しゃぼんだま</div>
-      </a>
-      <a class="game-tile" style="--tile-color:var(--purple)" href="games/finger-paint/index.html">
-        <div class="game-tile__emoji">🎨</div>
-        <div class="game-tile__label">おえかき</div>
-      </a>
-      <a class="game-tile" style="--tile-color:var(--orange)" href="games/animal-sounds/index.html">
-        <div class="game-tile__emoji">🐶</div>
-        <div class="game-tile__label">なきごえ</div>
-      </a>
-      <a class="game-tile" style="--tile-color:var(--blue)" href="games/fireworks/index.html">
-        <div class="game-tile__emoji">🎆</div>
-        <div class="game-tile__label">はなび</div>
-      </a>
-      <a class="game-tile" style="--tile-color:var(--yellow)" href="games/star-catch/index.html">
-        <div class="game-tile__emoji">⭐</div>
-        <div class="game-tile__label">ほしとり</div>
-      </a>
-      <a class="game-tile" style="--tile-color:var(--teal)" href="games/shape-sorter/index.html">
-        <div class="game-tile__emoji">🧩</div>
-        <div class="game-tile__label">かたちあわせ</div>
-      </a>
-      <a class="game-tile" style="--tile-color:var(--green)" href="games/color-hunt/index.html">
-        <div class="game-tile__emoji">🌈</div>
-        <div class="game-tile__label">いろさがし</div>
-      </a>
-      <a class="game-tile" style="--tile-color:var(--coral)" href="games/rain-ripples/index.html">
-        <div class="game-tile__emoji">💧</div>
-        <div class="game-tile__label">あめふり</div>
-      </a>
-      <a class="game-tile" style="--tile-color:var(--pink)" href="games/animal-quiz/index.html">
-        <img class="game-tile__char" src="icons/characters/kuma.png" alt="くまた">
-        <div class="game-tile__label">どうぶつクイズ</div>
-      </a>
-      <a class="game-tile" style="--tile-color:var(--purple)" href="games/memory-match/index.html">
-        <img class="game-tile__char" src="icons/characters/neko.png" alt="みけ">
-        <div class="game-tile__label">えあわせ</div>
-      </a>
-      <a class="game-tile" style="--tile-color:var(--orange)" href="games/counting/index.html">
-        <img class="game-tile__char" src="icons/characters/usagi.png" alt="ぴょん">
-        <div class="game-tile__label">かずあそび</div>
-      </a>
-      <a class="game-tile" style="--tile-color:var(--coral)" href="games/pet-friends/index.html">
-        <div class="game-tile__pet-pair" aria-hidden="true">
-          <img src="icons/animals/cat.png" alt="">
-          <img src="icons/animals/dog.png" alt="">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
+    <meta name="theme-color" content="#f7f5ed" />
+    <meta
+      name="description"
+      content="2〜6歳の成長に合わせて選べる23の遊び。考える・暮らす・自由に遊ぶ、オフライン対応のあそびばこ。"
+    />
+    <title>あそびばこ | あそんで、ひらめく。</title>
+    <link rel="manifest" href="manifest.json" />
+    <link rel="icon" href="icons/favicon-32.png" />
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+    <link rel="stylesheet" href="shared/style.css" />
+    <link rel="stylesheet" href="shared/challenge.css" />
+  </head>
+  <body class="playroom">
+    <main class="room">
+      <header class="topline">
+        <p class="room-brand">あそびばこ / LITTLE PLAYROOM</p>
+        <h1>あそんで、ひらめく。</h1>
+        <p class="muted">ちいさな「できた！」を、すこしずつ。</p>
+      </header>
+      <section class="hero">
+        <div>
+          <span class="eyebrow">６つの あたらしい あそび</span>
+          <h2>かんがえるって、おもしろい。</h2>
+          <p>
+            おつかい、みちづくり、ロボット。<br />ためして、なおして、もういっかい。
+          </p>
+          <p class="muted">
+            新しい6ゲームは難易度3段階。4〜6歳を目安に遊べます。
+          </p>
         </div>
-        <div class="game-tile__label">なでなで</div>
-      </a>
-      <a class="game-tile" style="--tile-color:var(--blue)" href="games/elevator/index.html">
-        <div class="game-tile__emoji">🛗</div>
-        <div class="game-tile__label">エレベーター</div>
-      </a>
-      <a class="game-tile" style="--tile-color:var(--pink)" href="games/gacha/index.html">
-        <div class="game-tile__emoji">🎁</div>
-        <div class="game-tile__label">ガチャガチャ</div>
-      </a>
-      <a class="game-tile" style="--tile-color:var(--teal)" href="games/night-safari/index.html">
-        <div class="game-tile__emoji">🔦</div>
-        <div class="game-tile__label">よるのさがしもの</div>
-      </a>
-      <a class="game-tile" style="--tile-color:var(--purple)" href="games/pattern-next/index.html">
-        <div class="game-tile__emoji">🔴🔷</div>
-        <div class="game-tile__label">つぎはどれ？</div>
-      </a>
-      <a class="game-tile" style="--tile-color:var(--green)" href="games/crosswalk/index.html">
-        <div class="game-tile__emoji">🚦</div>
-        <div class="game-tile__label">おうだんほどう</div>
-      </a>
-    </div>
-
-    <p class="home-footer">保護者の方へ：広告・課金・通信は一切ありません。オフラインでも遊べます。<br>音を消すには右上の 🔊 ボタンをタップしてください。</p>
-    <p class="version-tag" id="versionTag"></p>
-  </div>
-
-  <script src="shared/app.js"></script>
-  <script>
-    KidsApp.initCommon({ home: false });
-    KidsApp.BGM.start('calm');
-
-    // Shows the version the service worker is *actually* running, so it's
-    // obvious at a glance whether a fresh install/update really landed
-    // instead of the app quietly serving old cached files.
-    function updateVersionTag() {
-      const el = document.getElementById('versionTag');
-      KidsApp.getServiceWorkerVersion().then((v) => {
-        el.textContent = v ? 'バージョン ' + v : '';
-      });
-    }
-    updateVersionTag();
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.addEventListener('controllerchange', () => {
-        setTimeout(updateVersionTag, 300);
-      });
-    }
-  </script>
-</body>
+        <div class="hero-art" aria-hidden="true">🛒 🧩 🤖</div>
+      </section>
+      <nav class="filters" aria-label="ねんれいの めやす">
+        <button class="pill" data-age="all" aria-pressed="true">
+          🌼 みんな</button
+        ><button class="pill" data-age="little" aria-pressed="false">
+          🐣 2〜3さい</button
+        ><button class="pill" data-age="older" aria-pressed="false">
+          🚀 4〜6さい
+        </button>
+      </nav>
+      <nav class="filters" aria-label="あそびの しゅるい">
+        <button class="pill" data-category="all" aria-pressed="true">
+          すべて</button
+        ><button class="pill" data-category="think" aria-pressed="false">
+          🧩 ひらめき</button
+        ><button class="pill" data-category="life" aria-pressed="false">
+          🛒 くらし</button
+        ><button class="pill" data-category="free" aria-pressed="false">
+          🎨 じゆうあそび</button
+        ><button class="pill" data-category="favorites" aria-pressed="false">
+          ♥ おきにいり
+        </button>
+      </nav>
+      <p id="filterStatus" class="muted" role="status"></p>
+      <div id="catalog"></div>
+      <noscript
+        ><ul>
+          <li><a href="games/shopping/index.html">おつかいできるかな？</a></li>
+          <li><a href="games/animal-path/index.html">どうぶつの道づくり</a></li>
+          <li><a href="games/robot-code/index.html">ロボットにおしえて</a></li>
+          <li><a href="games/bento/index.html">おべんとう工場</a></li>
+          <li><a href="games/animal-detective/index.html">どうぶつ探偵</a></li>
+          <li><a href="games/balance/index.html">どっちがおもい？</a></li>
+          <li><a href="games/bubble-pop/index.html">しゃぼんだま</a></li>
+          <li><a href="games/finger-paint/index.html">おえかき</a></li>
+          <li><a href="games/animal-sounds/index.html">なきごえ</a></li>
+          <li><a href="games/fireworks/index.html">はなび</a></li>
+          <li><a href="games/star-catch/index.html">ほしとり</a></li>
+          <li><a href="games/shape-sorter/index.html">かたちあわせ</a></li>
+          <li><a href="games/color-hunt/index.html">いろさがし</a></li>
+          <li><a href="games/rain-ripples/index.html">あめふり</a></li>
+          <li><a href="games/animal-quiz/index.html">どうぶつクイズ</a></li>
+          <li><a href="games/memory-match/index.html">えあわせ</a></li>
+          <li><a href="games/counting/index.html">かずあそび</a></li>
+          <li><a href="games/pet-friends/index.html">なでなで</a></li>
+          <li><a href="games/elevator/index.html">エレベーター</a></li>
+          <li><a href="games/gacha/index.html">ガチャガチャ</a></li>
+          <li><a href="games/night-safari/index.html">よるのさがしもの</a></li>
+          <li><a href="games/pattern-next/index.html">つぎはどれ？</a></li>
+          <li><a href="games/crosswalk/index.html">おうだんほどう</a></li>
+        </ul></noscript
+      >
+      <footer class="shelf-note">
+        <p>
+          保護者の方へ：年齢は目安です。好きな遊びから自由に選んでください。時間制限・広告・課金はありません。初回読み込み後はオフラインでも遊べます。
+        </p>
+        <p>
+          ♥
+          お気に入り・最近の遊び・新ゲームのメダルは、この端末に記録されます。音は右上のボタンで切り替えられます。
+        </p>
+        <p id="versionTag"></p>
+      </footer>
+    </main>
+    <script src="shared/app.js"></script>
+    <script src="shared/catalog.js"></script>
+    <script src="shared/home.js"></script>
+  </body>
 </html>

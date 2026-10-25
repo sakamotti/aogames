@@ -1,5 +1,5 @@
 /*
-  Design system for 3-4 year olds.
+  Design system for ages 2–6.
   Rules baked into every screen:
   - huge tap targets, no tiny buttons
   - no red "danger" colors, no failure/urgency cues
@@ -10,10 +10,10 @@
 */
 
 :root {
-  --bg-1: #fff6e9;
-  --bg-2: #ffeef5;
-  --ink: #4a3b78;
-  --ink-soft: #7a6ea3;
+  --bg-1: #f7f5ed;
+  --bg-2: #edf4ed;
+  --ink: #263e46;
+  --ink-soft: #667b80;
   --white: #ffffff;
 
   --pink: #ff6fa5;
@@ -27,7 +27,7 @@
 
   --radius-lg: 32px;
   --radius-md: 22px;
-  --shadow-soft: 0 10px 24px rgba(74, 59, 120, 0.18);
+  --shadow-soft: 0 6px 18px rgba(38, 62, 70, 0.12);
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
   --safe-left: env(safe-area-inset-left, 0px);
