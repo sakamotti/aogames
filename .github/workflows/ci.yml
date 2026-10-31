@@ -1,0 +1,21 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Syntax check (all JS)
+        run: find . -name '*.js' -type f -print0 | xargs -0 -n1 node --check
+      - name: App consistency check
+        run: node tools/check-app.js
+      - name: Challenge logic tests
+        run: node tools/test-challenges.js
