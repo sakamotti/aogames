@@ -1,5 +1,6 @@
 (function () {
   KidsApp.initCommon();
+  KidsApp.preloadAnimalSounds();
 
   const ANIMALS = [
     { img: '../../icons/animals/dog.png', name: 'いぬ', sound: 'わんわん！', sfx: 'dog', color: 'var(--orange)' },

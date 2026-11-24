@@ -134,6 +134,7 @@
               () => {
                 basket[icon]--;
                 drawBag();
+                KidsApp.Sound.tap();
               },
               'item',
               icon + 'を ひとつ もどす'
@@ -254,7 +255,8 @@
     let state = { position: 0, facing: 1 },
       running = false,
       stop = () => {},
-      step = 0;
+      step = 0,
+      runButton = null;
     const arrows = ['↑', '→', '↓', '←'],
       labels = { F: '↑', L: '↶', R: '↷' };
     function drawGrid() {
@@ -283,6 +285,7 @@
             if (!running) {
               commands.splice(i, 1);
               drawQueue();
+              KidsApp.Sound.tap();
             }
           },
           'command',
@@ -296,6 +299,7 @@
     function setRunning(value) {
       running = value;
       controls.querySelectorAll('button').forEach((b) => (b.disabled = value));
+      if (runButton) runButton.disabled = value;
       drawQueue();
     }
     [
@@ -308,6 +312,7 @@
           if (commands.length < task.limit) {
             commands.push(code);
             drawQueue();
+            KidsApp.Sound.tap();
           } else say('いっぱいだね。めいれいを おすと けせるよ。');
         })
       )
@@ -325,42 +330,55 @@
         drawGrid();
         setRunning(true);
         say('ロボットが うごくよ。');
-        stop = KidsApp.startAnimationLoop(
-          () => {
-            const next = M.robotStep(task, state, commands[step]);
-            state = next;
-            drawGrid();
-            if (next.blocked) {
-              stop();
-              setRunning(false);
-              retry('ここは とおれないね。めいれいを なおしてみよう。');
-              return;
-            }
-            step++;
-            if (state.position === task.goal) {
-              stop();
-              win('たからものに とうちゃく！');
-              return;
-            }
-            if (step >= commands.length) {
-              stop();
-              setRunning(false);
-              retry('あと すこし！ めいれいを つけたしてみよう。');
-              return;
-            }
-            drawQueue();
-          },
-          { fps: 1 }
-        );
+        // The animation loop's first frame fires almost immediately, so
+        // without a beat here a first step into a wall would overwrite
+        // the "ロボットが うごくよ" announcement before it is heard, and
+        // the movement starts before a child can look at the robot.
+        let loopStop = null;
+        const startTimer = setTimeout(() => {
+          loopStop = KidsApp.startAnimationLoop(
+            () => {
+              const next = M.robotStep(task, state, commands[step]);
+              state = next;
+              drawGrid();
+              if (next.blocked) {
+                stop();
+                setRunning(false);
+                retry('ここは とおれないね。めいれいを なおしてみよう。');
+                return;
+              }
+              step++;
+              if (state.position === task.goal) {
+                stop();
+                win('たからものに とうちゃく！');
+                return;
+              }
+              if (step >= commands.length) {
+                stop();
+                setRunning(false);
+                retry('あと すこし！ めいれいを つけたしてみよう。');
+                return;
+              }
+              drawQueue();
+            },
+            { fps: 1 }
+          );
+        }, 750);
+        stop = () => {
+          clearTimeout(startTimer);
+          if (loopStop) loopStop();
+        };
       },
       'primary'
     );
+    runButton = run;
     controls.append(
       button('ぜんぶ けす', () => {
         commands.length = 0;
         state = { position: 0, facing: 1 };
         drawQueue();
         drawGrid();
+        KidsApp.Sound.tap();
       })
     );
     board.append(
@@ -409,6 +427,7 @@
           () => {
             selected = i;
             draw();
+            KidsApp.Sound.tap();
           },
           'slot' + (selected === i ? ' selected' : ''),
           `${i + 1}ばんの ばしょ ${icon || 'からっぽ'}`
@@ -436,6 +455,7 @@
     const clear = button('えらんだ ばしょを からに', () => {
       slots[selected] = null;
       draw();
+      KidsApp.Sound.tap();
     });
     const check = button(
       'できあがり！',
@@ -502,7 +522,10 @@
   function balance({ board, level, say, win, retry }) {
     const task = M.balance(level),
       amounts = task.weights.map(() => 0),
-      icons = ['🍎', '🍐', '🍊'];
+      // Silhouettes and real-world heaviness both increase left to right
+      // (strawberry 1, banana 2, watermelon 3), so the weights read
+      // intuitively even for kids who can't yet use colour or "×".
+      icons = ['🍓', '🍌', '🍉'];
     const scale = el('div', 'scale'),
       pans = el('div', 'scale-pans'),
       left = el('div', 'pan'),
@@ -539,6 +562,7 @@
               () => {
                 amounts[i]--;
                 draw();
+                KidsApp.Sound.tap();
               },
               'secondary',
               icons[i] + 'を ひとつ もどす'
@@ -557,7 +581,7 @@
         'item',
         icons[i] + 'を ひとつ のせる'
       );
-      b.append(el('small', '', '🧊 × ' + w + ' と おなじ'));
+      b.append(el('small', '', '🧊 × ' + w + ' ' + '●'.repeat(w)));
       add.append(b);
     });
     board.append(

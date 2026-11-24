@@ -1,5 +1,6 @@
 (function () {
   KidsApp.initCommon();
+  KidsApp.preloadAnimalSounds();
 
   const ANIMALS = [
     { key: 'dog', img: '../../icons/animals/dog.png', name: 'いぬ', fact: 'においを かぐのが とくいだよ' },

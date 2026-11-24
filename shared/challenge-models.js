@@ -69,11 +69,23 @@
         masks[i] = level === 3 && int(2) ? [0, 1, 3] : [0, 1];
       });
     }
+    let rotated = masks.map((m) => rotate(m, int(4)));
+    // Guard against a board that is already solved before the child
+    // touches anything: if the random rotation happens to leave start
+    // and home connected, rotate everything again (a fresh random spin
+    // per tile), up to 10 attempts.
+    for (let attempt = 0; attempt < 10 && roadConnected(n, rotated); attempt++) {
+      rotated = rotated.map((m) => rotate(m, int(4)));
+    }
+    if (roadConnected(n, rotated)) {
+      // Vanishingly rare last resort: one extra turn of the start tile.
+      rotated = rotated.map((m, i) => (i === 0 ? rotate(m, 1) : m));
+    }
     return {
       n,
       route,
       solution: masks.map((m) => m.slice()),
-      masks: masks.map((m) => rotate(m, int(4))),
+      masks: rotated,
     };
   }
   function roadConnected(n, masks) {

@@ -6,9 +6,8 @@
   let age = 'all',
     category = 'all';
   const host = document.getElementById('catalog');
-  function card(game) {
-    const data = read(),
-      favorites = data.favorites || [];
+  function card(game, data) {
+    const favorites = data.favorites || [];
     const article = document.createElement('article');
     article.className = 'game-card';
     const link = document.createElement('a');
@@ -53,17 +52,32 @@
           ? f.filter((x) => x !== game.id)
           : [...f, game.id];
       });
-      render();
-      const target =
-        host.querySelector('[data-favorite="' + game.id + '"]') ||
-        host.querySelector('.favorite') ||
-        document.querySelector('[data-category="favorites"]');
-      target.focus({ preventScroll: true });
+      if (category === 'favorites') {
+        // The card itself may disappear from this view, so rebuild and
+        // move focus somewhere sensible, as before.
+        render();
+        const target =
+          host.querySelector('[data-favorite="' + game.id + '"]') ||
+          host.querySelector('.favorite') ||
+          document.querySelector('[data-category="favorites"]');
+        target.focus({ preventScroll: true });
+        return;
+      }
+      // In other views the card stays put: just sync every heart for
+      // this game (it can appear in two sections at once) instead of
+      // rebuilding the whole list and losing the scroll/focus position.
+      const isFavorite = (read().favorites || []).includes(game.id);
+      host
+        .querySelectorAll('[data-favorite="' + game.id + '"]')
+        .forEach((b) => {
+          b.textContent = isFavorite ? '♥' : '♡';
+          b.setAttribute('aria-pressed', String(isFavorite));
+        });
     });
     article.append(link, favorite);
     return article;
   }
-  function section(title, list) {
+  function section(title, list, data) {
     if (!list.length) return;
     const s = document.createElement('section'),
       h = document.createElement('h2'),
@@ -71,24 +85,27 @@
     h.className = 'section-title';
     h.textContent = title;
     grid.className = 'cards';
-    list.forEach((g) => grid.append(card(g)));
+    list.forEach((g) => grid.append(card(g, data)));
     s.append(h, grid);
     host.append(s);
   }
-  function matches(g) {
+  function matches(g, data) {
     return (
       (age === 'all' ||
         (age === 'little'
           ? g.age <= 3
           : g.age >= 3 && g.category !== 'free')) &&
       (category === 'all' || category === 'favorites'
-        ? category !== 'favorites' || (read().favorites || []).includes(g.id)
+        ? category !== 'favorites' || (data.favorites || []).includes(g.id)
         : g.category === category)
     );
   }
   function render() {
     host.replaceChildren();
-    const visible = games.filter(matches);
+    // Read the saved state once per render: card()/matches() used to
+    // re-read and re-parse localStorage for every single game.
+    const data = read();
+    const visible = games.filter((g) => matches(g, data));
     document.getElementById('filterStatus').textContent =
       visible.length + 'この あそび';
     document
@@ -104,13 +121,15 @@
     if (age === 'all' && category === 'all') {
       section(
         'もういちど あそぶ',
-        (read().recent || [])
+        (data.recent || [])
           .map((id) => games.find((g) => g.id === id))
-          .filter(Boolean)
+          .filter(Boolean),
+        data
       );
       section(
         'あたらしい ひらめき',
-        visible.filter((g) => g.isNew)
+        visible.filter((g) => g.isNew),
+        data
       );
     }
     const normal =
@@ -124,7 +143,8 @@
     ].forEach(([key, title]) =>
       section(
         title,
-        normal.filter((g) => g.category === key)
+        normal.filter((g) => g.category === key),
+        data
       )
     );
     if (!visible.length) {

@@ -41,11 +41,21 @@
   }
 
   const MUTE_KEY = 'kidsapp_muted';
+  // Storage can throw (private browsing, storage restrictions); keep an
+  // in-memory copy so the mute button never crashes the app at startup.
+  let memoryMuted = null;
   function isMuted() {
-    return localStorage.getItem(MUTE_KEY) === '1';
+    try {
+      return localStorage.getItem(MUTE_KEY) === '1';
+    } catch (_) {
+      return memoryMuted === true;
+    }
   }
   function setMuted(v) {
-    localStorage.setItem(MUTE_KEY, v ? '1' : '0');
+    memoryMuted = !!v;
+    try {
+      localStorage.setItem(MUTE_KEY, v ? '1' : '0');
+    } catch (_) {}
   }
 
   // Small, local-only learning profile. Games begin at a moderate level and
@@ -122,17 +132,30 @@
     osc.stop(t0 + duration + 0.05);
   }
 
+  // One shared 2s white-noise buffer per context, reused by every noise
+  // sound instead of allocating (and filling sample-by-sample) a fresh
+  // buffer on each play - repeated splashes/purrs used to spike GC/CPU.
+  // Each play starts at a random offset so repeats don't sound identical;
+  // the gain envelopes do the shaping, as before.
+  let noiseBuffer = null;
+  let noiseBufferCtx = null;
+  function getNoiseBuffer(audio) {
+    if (!noiseBuffer || noiseBufferCtx !== audio) {
+      const size = Math.floor(audio.sampleRate * 2);
+      noiseBuffer = audio.createBuffer(1, size, audio.sampleRate);
+      const data = noiseBuffer.getChannelData(0);
+      for (let i = 0; i < size; i++) data[i] = Math.random() * 2 - 1;
+      noiseBufferCtx = audio;
+    }
+    return noiseBuffer;
+  }
   function playNoise({ duration = 0.3, filterFreq = 1200, gain = 0.15, delay = 0 } = {}) {
     if (isMuted() || !audioUnlocked) return;
     const audio = getCtx();
     if (!audio) return;
     const t0 = audio.currentTime + delay;
-    const bufferSize = Math.floor(audio.sampleRate * duration);
-    const buffer = audio.createBuffer(1, bufferSize, audio.sampleRate);
-    const data = buffer.getChannelData(0);
-    for (let i = 0; i < bufferSize; i++) data[i] = (Math.random() * 2 - 1) * (1 - i / bufferSize);
     const src = audio.createBufferSource();
-    src.buffer = buffer;
+    src.buffer = getNoiseBuffer(audio);
     const filter = audio.createBiquadFilter();
     filter.type = 'bandpass';
     filter.frequency.value = filterFreq;
@@ -140,7 +163,7 @@
     g.gain.setValueAtTime(gain, t0);
     g.gain.exponentialRampToValueAtTime(0.001, t0 + duration);
     src.connect(filter).connect(g).connect(audio.destination);
-    src.start(t0);
+    src.start(t0, Math.random() * Math.max(0, 2 - duration - 0.1), duration + 0.05);
   }
 
   // A richer "creature vocalization" synth: unison-detuned oscillators for
@@ -238,12 +261,8 @@
     }
 
     if (noiseMix > 0) {
-      const bufferSize = Math.max(1, Math.floor(audio.sampleRate * duration));
-      const buffer = audio.createBuffer(1, bufferSize, audio.sampleRate);
-      const data = buffer.getChannelData(0);
-      for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
       const src = audio.createBufferSource();
-      src.buffer = buffer;
+      src.buffer = getNoiseBuffer(audio);
       const nf = audio.createBiquadFilter();
       nf.type = 'bandpass';
       nf.frequency.value = noiseFilterFreq;
@@ -251,7 +270,7 @@
       const ng = audio.createGain();
       ng.gain.value = noiseMix;
       src.connect(nf).connect(ng).connect(master);
-      src.start(t0);
+      src.start(t0, Math.random() * Math.max(0, 2 - duration - 0.1), duration + 0.05);
     }
   }
 
@@ -436,17 +455,22 @@
       el.pause();
       el.currentTime = 0;
       let started = false;
+      const onPlaying = () => {
+        started = true;
+        clearTimeout(fallbackTimer);
+      };
       const fallback = () => {
         if (started) return;
         started = true;
+        el.removeEventListener('playing', onPlaying);
         el.pause();
         if (AnimalSoundsSynth[key]) AnimalSoundsSynth[key]();
       };
-      const fallbackTimer = setTimeout(fallback, 180);
-      el.addEventListener('playing', () => {
-        started = true;
-        clearTimeout(fallbackTimer);
-      }, { once: true });
+      // 180ms was too short for MP3 decode on low-end Android: the synth
+      // fallback fired and then the real clip started on top of it. Give
+      // playback a more realistic window before falling back.
+      const fallbackTimer = setTimeout(fallback, 450);
+      el.addEventListener('playing', onPlaying, { once: true });
       const p = el.play();
       if (p && p.catch) p.catch(fallback);
     } catch (e) {
@@ -455,9 +479,16 @@
   }
   const AnimalSounds = {};
   Object.keys(ANIMAL_CLIP_FILES).forEach((key) => {
-    getAnimalClip(key);
+    // Lazy: clips are created on first play (see getAnimalClip), not at
+    // startup - most screens never play an animal sound, and preloading
+    // all 9 clips cost a fetch + decoder on every single page.
     AnimalSounds[key] = () => playAnimalClip(key);
   });
+  // Animal-heavy games can call this after the first tap to warm the
+  // clips in the background, so the first real play has no delay.
+  function preloadAnimalSounds() {
+    Object.keys(ANIMAL_CLIP_FILES).forEach((key) => getAnimalClip(key));
+  }
 
   const notes = { C: 261.63, D: 293.66, E: 329.63, F: 349.23, G: 392.0, A: 440.0, B: 493.88, C2: 523.25, D2: 587.33, E2: 659.25 };
 
@@ -600,11 +631,16 @@
   function pickVoice() {
     if (!global.speechSynthesis) return;
     const jaVoices = global.speechSynthesis.getVoices().filter((v) => v.lang && v.lang.startsWith('ja'));
-    // Where more than one Japanese voice is available, prefer a named
-    // network/premium voice (e.g. Chrome's "Google 日本語") over a generic
-    // compact/local one - it tends to sound noticeably less robotic.
-    const preferred = jaVoices.find((v) => /google|natural|neural|premium|enhanced/i.test(v.name));
-    jaVoice = preferred || jaVoices[0] || null;
+    // Prefer LOCAL Japanese voices. The nicest-sounding named voices
+    // (e.g. Chrome's "Google 日本語") are usually network voices
+    // (localService === false): they silently fail with no connection,
+    // which breaks narration exactly where this app is used - out and
+    // about, offline. Within the local pool, still prefer a named
+    // natural/premium voice when one exists.
+    const localJa = jaVoices.filter((v) => v.localService);
+    const pool = localJa.length ? localJa : jaVoices;
+    const preferred = pool.find((v) => /natural|neural|premium|enhanced|kyoko|otoya|haruka|ayumi/i.test(v.name));
+    jaVoice = preferred || pool[0] || null;
   }
   if (global.speechSynthesis) {
     pickVoice();
@@ -612,10 +648,23 @@
   }
   let speechTimer = null;
   let speechSequence = 0;
+  // Keep a strong reference to the in-flight utterance: in Chrome an
+  // utterance held only by a local variable can be garbage-collected
+  // mid-speech, and then onend never fires - which would leave the BGM
+  // ducked forever. The failsafe timer restores the BGM even if onend
+  // is lost for any other reason.
+  let currentUtterance = null;
+  let speechFailsafe = null;
+  function clearSpeechFailsafe() {
+    if (speechFailsafe) clearTimeout(speechFailsafe);
+    speechFailsafe = null;
+  }
   function cancelSpeech() {
     speechSequence++;
     if (speechTimer) clearTimeout(speechTimer);
     speechTimer = null;
+    clearSpeechFailsafe();
+    currentUtterance = null;
     if (global.speechSynthesis) global.speechSynthesis.cancel();
     setBgmDucked(false);
   }
@@ -631,15 +680,20 @@
       speechTimer = null;
       if (sequence !== speechSequence || isMuted()) return;
       const u = new SpeechSynthesisUtterance(text);
+      currentUtterance = u;
       u.lang = 'ja-JP';
       if (jaVoice) u.voice = jaVoice;
       u.rate = 0.85;
       u.pitch = 1.15;
       const restoreBgm = () => {
+        clearSpeechFailsafe();
+        if (currentUtterance === u) currentUtterance = null;
         if (sequence === speechSequence) setBgmDucked(false);
       };
       u.onend = restoreBgm;
       u.onerror = restoreBgm;
+      clearSpeechFailsafe();
+      speechFailsafe = setTimeout(restoreBgm, Math.max(4000, text.length * 450));
       setBgmDucked(true);
       global.speechSynthesis.resume();
       global.speechSynthesis.speak(u);
@@ -833,7 +887,7 @@
   // ---------------------------------------------------------------------
   // Service worker registration (offline play while out and about)
   // ---------------------------------------------------------------------
-  function registerServiceWorker() {
+  function registerServiceWorker(autoReload = false) {
     if (!('serviceWorker' in navigator)) return;
     let registration = null;
     global.addEventListener('load', () => {
@@ -854,10 +908,16 @@
     // the app open/cached. Skip the very first activation (a brand-new
     // visitor has nothing to refresh yet) - only reload when a controller
     // that was already active gets replaced by a newer one.
+    // Only the launcher (autoReload) does this: reloading a game page the
+    // moment an update activates - e.g. right as the app returns to the
+    // foreground and the visibilitychange check below finds one - would
+    // throw away the board/drawing a child is in the middle of. Game
+    // pages keep running the version they loaded with; the update takes
+    // effect the next time the launcher is opened.
     let hadController = !!navigator.serviceWorker.controller;
     let reloaded = false;
     navigator.serviceWorker.addEventListener('controllerchange', () => {
-      if (hadController && !reloaded) {
+      if (autoReload && hadController && !reloaded) {
         reloaded = true;
         global.location.reload();
       }
@@ -1029,31 +1089,50 @@
   function initBreakReminder() {
     const SESSION_KEY = 'kidsapp_session_started';
     const REMIND_MS = 15 * 60 * 1000;
-    let started = Number(sessionStorage.getItem(SESSION_KEY));
+    // sessionStorage can throw in restricted/private contexts; the
+    // reminder is a nicety, never a reason to break startup.
+    const readStarted = () => {
+      try {
+        return Number(sessionStorage.getItem(SESSION_KEY));
+      } catch (_) {
+        return 0;
+      }
+    };
+    const writeStarted = (t) => {
+      try {
+        sessionStorage.setItem(SESSION_KEY, String(t));
+      } catch (_) {}
+    };
+    let started = readStarted();
     if (!started || Date.now() - started > 2 * 60 * 60 * 1000) {
       started = Date.now();
-      sessionStorage.setItem(SESSION_KEY, String(started));
+      writeStarted(started);
     }
-    const remaining = Math.max(1000, REMIND_MS - (Date.now() - started));
-    setTimeout(() => {
-      if (document.querySelector('.break-reminder')) return;
-      const overlay = document.createElement('div');
-      overlay.className = 'break-reminder';
-      overlay.setAttribute('role', 'dialog');
-      overlay.setAttribute('aria-label', '休憩のお知らせ');
-      overlay.innerHTML =
-        '<div class="break-reminder__panel">' +
-          '<div class="break-reminder__mascot">🌿</div>' +
-          '<div class="break-reminder__text">すこし めを やすめよう</div>' +
-          '<button class="break-reminder__continue" type="button">もうすこし あそぶ</button>' +
-        '</div>';
-      document.body.appendChild(overlay);
-      KidsApp.speak('すこし めを やすめよう');
-      overlay.querySelector('button').addEventListener('click', () => {
-        sessionStorage.setItem(SESSION_KEY, String(Date.now()));
-        overlay.remove();
-      });
-    }, remaining);
+    function schedule(delay) {
+      setTimeout(() => {
+        if (document.querySelector('.break-reminder')) return;
+        const overlay = document.createElement('div');
+        overlay.className = 'break-reminder';
+        overlay.setAttribute('role', 'dialog');
+        overlay.setAttribute('aria-label', '休憩のお知らせ');
+        overlay.innerHTML =
+          '<div class="break-reminder__panel">' +
+            '<div class="break-reminder__mascot">🌿</div>' +
+            '<div class="break-reminder__text">すこし めを やすめよう</div>' +
+            '<button class="break-reminder__continue" type="button">もうすこし あそぶ</button>' +
+          '</div>';
+        document.body.appendChild(overlay);
+        KidsApp.speak('すこし めを やすめよう');
+        overlay.querySelector('button').addEventListener('click', () => {
+          writeStarted(Date.now());
+          overlay.remove();
+          // Re-arm: without this the reminder only ever fired once per
+          // session, no matter how long play continued afterwards.
+          schedule(REMIND_MS);
+        });
+      }, delay);
+    }
+    schedule(Math.max(1000, REMIND_MS - (Date.now() - started)));
   }
 
   function initCommon(opts = {}) {
@@ -1089,7 +1168,7 @@
       trapBackNavigation();
     }
     initMuteButton();
-    registerServiceWorker();
+    registerServiceWorker(opts.home === false);
     initBreakReminder();
   }
 
@@ -1116,6 +1195,7 @@
     createAdaptive,
     BOTTOM_GAP: BOTTOM_GAP_PX,
     AnimalSounds,
+    preloadAnimalSounds,
     getServiceWorkerVersion,
   };
 })(window);

@@ -1,5 +1,6 @@
 (function () {
   KidsApp.initCommon();
+  KidsApp.preloadAnimalSounds();
 
   const canvas = document.getElementById('c');
   const stage = KidsApp.setupCanvas(canvas);

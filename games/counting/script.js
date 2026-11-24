@@ -50,12 +50,19 @@
   }
 
   function pickOptions(correct) {
+    // Keep choices inside the range this level actually asks about: at
+    // the first level (at most 3 objects) a "4" card only confuses, and
+    // with just 3 possible values there are only 3 cards to show.
+    const max = MAX_COUNTS[adaptive.level];
+    const count = Math.min(4, max);
     const opts = new Set([correct]);
-    while (opts.size < 4) {
+    let guard = 0;
+    while (opts.size < count && guard++ < 100) {
       const delta = Math.floor(KidsApp.rand(-3, 4));
       const candidate = correct + delta;
-      if (candidate >= 1 && candidate <= 10) opts.add(candidate);
+      if (candidate >= 1 && candidate <= max) opts.add(candidate);
     }
+    for (let n = 1; opts.size < count && n <= max; n++) opts.add(n);
     return shuffle([...opts]);
   }
 
@@ -73,7 +80,11 @@
       const card = document.createElement('button');
       card.className = 'number-card';
       card.textContent = n;
-      card.addEventListener('pointerdown', () => onPick(n, card));
+      card.addEventListener('pointerdown', (e) => {
+        // Ignore the palm/extra fingers of a hand holding the tablet.
+        if (!e.isPrimary) return;
+        onPick(n, card);
+      });
       optionsEl.appendChild(card);
     });
   }
@@ -98,7 +109,10 @@
       });
       const spokenCount = Array.from({ length: target }, (_, i) => i + 1).join('、');
       KidsApp.speak(`${spokenCount}。${target}こ だったね！`);
-      setTimeout(askQuestion, target * 180 + 1600);
+      // Wait long enough for the counting narration to actually finish
+      // at rate 0.85 - the old fixed wait cut it off mid-sentence for
+      // targets of 8-10 and jumped to the next question.
+      setTimeout(askQuestion, target * 520 + 1800);
     } else {
       card.classList.remove('shake-x');
       void card.offsetWidth;
@@ -112,6 +126,11 @@
   let resizeTimer = null;
   window.addEventListener('resize', () => {
     clearTimeout(resizeTimer);
-    resizeTimer = setTimeout(() => layoutObjects(target, currentEmoji), 200);
+    resizeTimer = setTimeout(() => {
+      // During the correct-answer celebration a relayout would rebuild
+      // the objects and wipe the counting highlight mid-animation.
+      if (locked) return;
+      layoutObjects(target, currentEmoji);
+    }, 200);
   });
 })();

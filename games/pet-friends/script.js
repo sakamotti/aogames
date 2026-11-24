@@ -2,6 +2,7 @@
   'use strict';
 
   KidsApp.initCommon();
+  KidsApp.preloadAnimalSounds();
   KidsApp.BGM.start('calm');
 
   const PETS = {
