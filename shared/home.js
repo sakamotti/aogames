@@ -28,13 +28,18 @@
     meta.append(badge);
     if (game.isNew) {
       const medals = document.createElement('span');
+      const levels = Array.from(
+        { length: PlayCatalog.LEVEL_COUNT },
+        (_, i) => i + 1
+      );
       medals.textContent =
         '★ ' +
-        [1, 2, 3].reduce(
+        levels.reduce(
           (n, l) => n + (data.stars?.[game.id + ':' + l] || 0),
           0
         ) +
-        '/9';
+        '/' +
+        PlayCatalog.LEVEL_COUNT * PlayCatalog.MAX_MEDALS_PER_LEVEL;
       meta.append(medals);
     }
     link.append(icon, title, desc, meta);

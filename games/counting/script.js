@@ -3,7 +3,8 @@
 
   const OBJECT_POOL = ['🍎', '🍓', '🍌', '🐥', '🎈', '⭐', '🍩', '🧸'];
 
-  const host = KidsApp.choice(KidsApp.CHARACTERS);
+  // かずあそび's guide is ぴょん, as the README's cast table says.
+  const host = KidsApp.CHARACTERS.find((c) => c.id === 'usagi');
   const mascot = KidsApp.mascotBubble(document.getElementById('mascotHost'), {
     img: host.img,
     name: host.name,
@@ -18,13 +19,9 @@
   let locked = false;
   const MAX_COUNTS = [3, 5, 10];
   const adaptive = KidsApp.createAdaptive('counting', MAX_COUNTS.length);
-
-  function shuffle(arr) {
-    return arr
-      .map((v) => [Math.random(), v])
-      .sort((a, b) => a[0] - b[0])
-      .map((v) => v[1]);
-  }
+  // All of this game's timers live in one scope, cleared together on
+  // pagehide - no ghost timers after leaving mid-celebration.
+  const timers = KidsApp.createTimerScope();
 
   function layoutObjects(count, emoji) {
     area.innerHTML = '';
@@ -63,7 +60,7 @@
       if (candidate >= 1 && candidate <= max) opts.add(candidate);
     }
     for (let n = 1; opts.size < count && n <= max; n++) opts.add(n);
-    return shuffle([...opts]);
+    return KidsApp.shuffle([...opts]);
   }
 
   function askQuestion() {
@@ -104,15 +101,15 @@
       mascot.setText(`いっしょに かぞえよう！ ${target}こ だね！`);
       const objects = [...area.children];
       objects.forEach((object, i) => {
-        setTimeout(() => object.classList.add('counted'), i * 180);
-        setTimeout(() => object.classList.remove('counted'), i * 180 + 300);
+        timers.setTimeout(() => object.classList.add('counted'), i * 180);
+        timers.setTimeout(() => object.classList.remove('counted'), i * 180 + 300);
       });
       const spokenCount = Array.from({ length: target }, (_, i) => i + 1).join('、');
       KidsApp.speak(`${spokenCount}。${target}こ だったね！`);
       // Wait long enough for the counting narration to actually finish
       // at rate 0.85 - the old fixed wait cut it off mid-sentence for
       // targets of 8-10 and jumped to the next question.
-      setTimeout(askQuestion, target * 520 + 1800);
+      timers.setTimeout(askQuestion, target * 520 + 1800);
     } else {
       card.classList.remove('shake-x');
       void card.offsetWidth;
@@ -125,8 +122,8 @@
   askQuestion();
   let resizeTimer = null;
   window.addEventListener('resize', () => {
-    clearTimeout(resizeTimer);
-    resizeTimer = setTimeout(() => {
+    timers.clearTimeout(resizeTimer);
+    resizeTimer = timers.setTimeout(() => {
       // During the correct-answer celebration a relayout would rebuild
       // the objects and wipe the counting highlight mid-animation.
       if (locked) return;

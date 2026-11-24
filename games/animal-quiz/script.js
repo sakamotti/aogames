@@ -14,7 +14,8 @@
     { img: '../../icons/animals/sheep.png', name: 'ひつじ', sound: 'めーめー', sfx: 'sheep' },
   ];
 
-  const host = KidsApp.choice(KidsApp.CHARACTERS);
+  // どうぶつクイズ's guide is くまた, as the README's cast table says.
+  const host = KidsApp.CHARACTERS.find((c) => c.id === 'kuma');
   const mascot = KidsApp.mascotBubble(document.getElementById('mascotHost'), {
     img: host.img,
     name: host.name,

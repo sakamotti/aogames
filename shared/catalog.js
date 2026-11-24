@@ -110,36 +110,37 @@
     isNew: !!isNew,
   }));
   const KEY = 'asobibako_journey_v1';
+  // Shared with home.js and challenge.js so the numbers can never drift
+  // apart (total medals per game = LEVEL_COUNT × MAX_MEDALS_PER_LEVEL).
+  const LEVEL_COUNT = 3;
+  const MAX_MEDALS_PER_LEVEL = 3;
   function read() {
-    try {
-      return JSON.parse(localStorage.getItem(KEY)) || {};
-    } catch (_) {
-      return {};
-    }
+    return KidsApp.storage.readJson(KEY, {});
   }
   function update(fn) {
     const data = read();
     fn(data);
-    try {
-      localStorage.setItem(KEY, JSON.stringify(data));
-    } catch (_) {}
+    KidsApp.storage.writeJson(KEY, data);
     return data;
   }
-  function visit(id) {
-    if (games.some((g) => g.id === id))
-      update((d) => {
-        d.recent = [id, ...(d.recent || []).filter((x) => x !== id)].slice(
-          0,
-          4
-        );
-      });
-  }
+  // "Recently played" is recorded centrally by KidsApp.initCommon()
+  // from the page URL; there is deliberately no visit() here any more.
   function complete(id, level) {
     update((d) => {
       d.stars = d.stars || {};
       const key = id + ':' + level;
-      d.stars[key] = Math.min(3, (d.stars[key] || 0) + 1);
+      d.stars[key] = Math.min(
+        MAX_MEDALS_PER_LEVEL,
+        (d.stars[key] || 0) + 1
+      );
     });
   }
-  global.PlayCatalog = { games, read, update, visit, complete };
+  global.PlayCatalog = {
+    games,
+    read,
+    update,
+    complete,
+    LEVEL_COUNT,
+    MAX_MEDALS_PER_LEVEL,
+  };
 })(window);

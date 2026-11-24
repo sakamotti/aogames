@@ -88,12 +88,14 @@
       masks: rotated,
     };
   }
-  function roadConnected(n, masks) {
+  // Cells reachable from the start (cell 0) through mutually connected
+  // road ends. The game uses this to highlight how far the road reaches;
+  // roadConnected() is the yes/no form of the same walk.
+  function roadReachable(n, masks) {
     const seen = new Set([0]),
       queue = [0];
     while (queue.length) {
       const p = queue.shift();
-      if (p === n * n - 1) return true;
       for (const d of masks[p]) {
         const [dy, dx] = DELTAS[d],
           y = Math.floor(p / n) + dy,
@@ -112,7 +114,10 @@
         }
       }
     }
-    return false;
+    return seen;
+  }
+  function roadConnected(n, masks) {
+    return roadReachable(n, masks).has(n * n - 1);
   }
   function robot(level) {
     const n = level + 2;
@@ -264,6 +269,7 @@
     quantitiesMatch,
     rotate,
     road,
+    roadReachable,
     roadConnected,
     robot,
     robotStep,

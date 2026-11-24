@@ -61,6 +61,62 @@
   // Small, local-only learning profile. Games begin at a moderate level and
   // unlock harder rounds after repeated success. No names, scores, or personal
   // information are stored, and nothing leaves the device.
+  // Shared safe JSON storage: every read/write in the app goes through
+  // here so a storage exception (private mode, restrictions) can never
+  // take a screen down, and key handling stays consistent.
+  const storage = {
+    readJson(key, fallback) {
+      try {
+        const v = JSON.parse(localStorage.getItem(key));
+        return v === null || v === undefined ? fallback : v;
+      } catch (_) {
+        return fallback;
+      }
+    },
+    writeJson(key, value) {
+      try {
+        localStorage.setItem(key, JSON.stringify(value));
+      } catch (_) {}
+    },
+  };
+
+  // Fisher-Yates shuffle (returns a new array). Several games used to
+  // carry their own sort-based shuffle, which is measurably biased.
+  function shuffleItems(items) {
+    const a = items.slice();
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  }
+
+  // A bag of timers that can be cleared together and cleans itself up
+  // on pagehide, so a screen never leaves ghost timers behind.
+  function createTimerScope() {
+    const timers = new Set();
+    const scope = {
+      setTimeout(fn, ms) {
+        const id = setTimeout(() => {
+          timers.delete(id);
+          fn();
+        }, ms);
+        timers.add(id);
+        return id;
+      },
+      clearTimeout(id) {
+        timers.delete(id);
+        clearTimeout(id);
+      },
+      clearAll() {
+        timers.forEach((id) => clearTimeout(id));
+        timers.clear();
+      },
+    };
+    global.addEventListener('pagehide', () => scope.clearAll());
+    return scope;
+  }
+
   const LEARNING_KEY = 'kidsapp_learning_v2';
   function readLearning() {
     try {
@@ -602,6 +658,7 @@
       getCtx();
       if (global.speechSynthesis) global.speechSynthesis.resume();
       BGM.resume();
+      replayPendingSpeech();
     },
     pop() { playTone({ freq: 500, glideTo: 900, duration: 0.18, type: 'sine', gain: 0.22 }); },
     tap() { playTone({ freq: 320, duration: 0.09, type: 'sine', gain: 0.12 }); },
@@ -655,6 +712,10 @@
   // is lost for any other reason.
   let currentUtterance = null;
   let speechFailsafe = null;
+  // Narration requested before the first tap unlocked audio (every game
+  // asks its first question at load time). Only the latest is kept;
+  // Sound.unlock() replays it if nothing newer has been spoken since.
+  let pendingSpeech = null;
   function clearSpeechFailsafe() {
     if (speechFailsafe) clearTimeout(speechFailsafe);
     speechFailsafe = null;
@@ -665,11 +726,17 @@
     speechTimer = null;
     clearSpeechFailsafe();
     currentUtterance = null;
+    pendingSpeech = null;
     if (global.speechSynthesis) global.speechSynthesis.cancel();
     setBgmDucked(false);
   }
   function speak(text, delay = 0) {
-    if (isMuted() || !audioUnlocked || !global.speechSynthesis) return;
+    if (isMuted() || !global.speechSynthesis) return;
+    if (!audioUnlocked) {
+      pendingSpeech = { text, sequence: ++speechSequence };
+      return;
+    }
+    pendingSpeech = null;
     const sequence = ++speechSequence;
     if (speechTimer) clearTimeout(speechTimer);
     speechTimer = null;
@@ -701,6 +768,18 @@
     if (delay > 0) speechTimer = setTimeout(start, delay);
     else start();
   }
+  function replayPendingSpeech() {
+    if (!pendingSpeech) return;
+    const pending = pendingSpeech;
+    setTimeout(() => {
+      // If the unlocking tap itself already produced newer narration
+      // (e.g. it was an answer button), the sequence has moved on and
+      // the queued first question must not talk over it.
+      if (pendingSpeech !== pending || speechSequence !== pending.sequence) return;
+      pendingSpeech = null;
+      speak(pending.text);
+    }, 60);
+  }
 
   // ---------------------------------------------------------------------
   // Confetti / celebration particles
@@ -722,6 +801,14 @@
   }
   function confettiBurst(container, x, y, count = 18) {
     ensureConfettiStyle();
+    // Respect reduced-motion settings with a much smaller burst.
+    if (global.matchMedia && global.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      count = Math.min(count, 6);
+    }
+    // One fragment insert and one cleanup timer per burst, instead of a
+    // DOM append and a setTimeout for every single particle.
+    const frag = document.createDocumentFragment();
+    const parts = [];
     for (let i = 0; i < count; i++) {
       const el = document.createElement('div');
       el.className = 'kidsapp-confetti';
@@ -734,9 +821,11 @@
       el.style.setProperty('--dy', Math.sin(angle) * dist + 60 + 'px');
       el.style.setProperty('--rot', Math.random() * 360 + 'deg');
       el.style.animation = `kidsapp-confetti-fall ${800 + Math.random() * 400}ms ease-out forwards`;
-      container.appendChild(el);
-      setTimeout(() => el.remove(), 1300);
+      frag.appendChild(el);
+      parts.push(el);
     }
+    container.appendChild(frag);
+    setTimeout(() => parts.forEach((el) => el.remove()), 1300);
   }
 
   function celebrateText(container, x, y, text) {
@@ -773,11 +862,13 @@
   // ---------------------------------------------------------------------
   function initHomeButton() {
     if (document.querySelector('.home-button')) return;
-    const btn = document.createElement('div');
+    // A real <button>, not a div: keyboard and assistive-tech users get
+    // focus and activation for free.
+    const btn = document.createElement('button');
+    btn.type = 'button';
     btn.className = 'home-button';
     btn.innerHTML = '<div class="home-button__fill"></div><span class="home-button__icon">🏠</span>';
-    btn.setAttribute('role', 'button');
-    btn.setAttribute('aria-label', 'ホームにもどる');
+    btn.setAttribute('aria-label', 'ホームにもどる（ながおし）');
     document.body.appendChild(btn);
 
     const fill = btn.querySelector('.home-button__fill');
@@ -793,7 +884,7 @@
     }
     function step(ts) {
       if (start === null) return;
-      const p = Math.min(100, ((ts - start) / HOLD_MS) * 100);
+      const p = Math.max(0, Math.min(100, ((ts - start) / HOLD_MS) * 100));
       fill.style.setProperty('--p', p);
       if (p >= 100) {
         if (navigator.vibrate) navigator.vibrate(30);
@@ -812,6 +903,28 @@
     btn.addEventListener('pointerup', reset);
     btn.addEventListener('pointerleave', reset);
     btn.addEventListener('pointercancel', reset);
+    // Touch pointers are implicitly captured by the button, so sliding
+    // a finger off it may never fire pointerleave; watch the position
+    // and cancel the hold once the finger leaves the button's bounds
+    // (a small hand gripping the screen edge shouldn't exit the game).
+    btn.addEventListener('pointermove', (e) => {
+      if (start === null) return;
+      const r = btn.getBoundingClientRect();
+      if (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom) {
+        reset();
+      }
+    });
+    global.addEventListener('blur', reset);
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'hidden') reset();
+    });
+    // Keyboard activation (Enter/Space) arrives as a click with
+    // detail === 0 and no pointer hold; honour it as a deliberate exit.
+    // Pointer clicks have detail >= 1 and are ignored here - the hold
+    // flow above is the only pointer way out.
+    btn.addEventListener('click', (e) => {
+      if (e.detail === 0) location.href = BASE + 'index.html';
+    });
   }
 
   // ---------------------------------------------------------------------
@@ -1026,11 +1139,15 @@
     function frame(now) {
       rafId = null;
       if (stopped || powerSaving || document.hidden) return;
+      const t0 = performance.now();
       render(now);
+      // Subtract the time render() itself took, so the effective frame
+      // rate stays at the target instead of drifting slower under load.
+      const spent = performance.now() - t0;
       timeoutId = global.setTimeout(() => {
         timeoutId = null;
         rafId = global.requestAnimationFrame(frame);
-      }, Math.max(0, interval - 8));
+      }, Math.max(0, interval - spent - 4));
     }
 
     const loop = {
@@ -1110,6 +1227,17 @@
     }
     function schedule(delay) {
       setTimeout(() => {
+        if (powerSaving) {
+          // The screen is dimmed/idle: don't speak or pop a dialog into
+          // that state. Wait until play resumes, then remind.
+          const onPower = (e) => {
+            if (e.detail && e.detail.saving) return;
+            document.removeEventListener('kidsapp:powerchange', onPower);
+            schedule(0);
+          };
+          document.addEventListener('kidsapp:powerchange', onPower);
+          return;
+        }
         if (document.querySelector('.break-reminder')) return;
         const overlay = document.createElement('div');
         overlay.className = 'break-reminder';
@@ -1138,12 +1266,13 @@
   function initCommon(opts = {}) {
     const gameId = global.location.pathname.match(/\/games\/([^/]+)\//)?.[1];
     if (gameId) {
-      try {
-        const key = 'asobibako_journey_v1';
-        const data = JSON.parse(localStorage.getItem(key)) || {};
-        data.recent = [gameId, ...(data.recent || []).filter(id => id !== gameId)].slice(0, 4);
-        localStorage.setItem(key, JSON.stringify(data));
-      } catch (_) { /* Play remains available when device storage is unavailable. */ }
+      // The single place "recently played" is recorded: every game page
+      // (classic and challenge alike) funnels through initCommon, so no
+      // per-framework visit() call is needed any more.
+      const key = 'asobibako_journey_v1';
+      const data = storage.readJson(key, {});
+      data.recent = [gameId, ...(data.recent || []).filter(id => id !== gameId)].slice(0, 4);
+      storage.writeJson(key, data);
     }
     document.addEventListener(
       'pointerdown',
@@ -1174,6 +1303,9 @@
 
   global.KidsApp = {
     BASE,
+    storage,
+    shuffle: shuffleItems,
+    createTimerScope,
     Sound,
     BGM,
     speak,

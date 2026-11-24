@@ -8,16 +8,21 @@
     if (text !== undefined) x.textContent = text;
     return x;
   }
-  function button(text, action, cls = 'secondary', label) {
+  function button(text, action, cls = 'secondary', label, opts = {}) {
     const b = el('button', cls, text);
     b.type = 'button';
     if (label) b.setAttribute('aria-label', label);
-    b.addEventListener('click', action);
+    b.addEventListener('click', (e) => {
+      // Buttons whose action doesn't already speak or play a result
+      // sound opt into a tap sound here, so no control is ever silent.
+      if (opts.sound === 'tap') KidsApp.Sound.tap();
+      else if (opts.sound === 'click') KidsApp.Sound.click();
+      action(e);
+    });
     return b;
   }
   function start(id) {
     KidsApp.initCommon();
-    PlayCatalog.visit(id);
     const game = PlayCatalog.games.find((g) => g.id === id);
     document.title = game.title + ' | あそびばこ';
     $('gameTitle').textContent = game.icon + ' ' + game.title;
@@ -34,8 +39,9 @@
     }
     function stars() {
       const count = PlayCatalog.read().stars?.[id + ':' + level] || 0;
+      const max = PlayCatalog.MAX_MEDALS_PER_LEVEL;
       $('progress').textContent =
-        'この むずかしさの メダル ' + '★'.repeat(count) + '☆'.repeat(3 - count);
+        'この むずかしさの メダル ' + '★'.repeat(count) + '☆'.repeat(max - count);
     }
     function win(text = 'できたね！ よく かんがえたね！') {
       if (solved) return;
@@ -134,10 +140,10 @@
               () => {
                 basket[icon]--;
                 drawBag();
-                KidsApp.Sound.tap();
               },
               'item',
-              icon + 'を ひとつ もどす'
+              icon + 'を ひとつ もどす',
+              { sound: 'tap' }
             )
           )
         );
@@ -190,44 +196,70 @@
     const task = M.road(level),
       grid = el('div', 'grid-board');
     grid.style.gridTemplateColumns = `repeat(${task.n},1fr)`;
-    function draw() {
-      grid.replaceChildren();
-      task.masks.forEach((mask, i) => {
-        const b = button(
-          '',
-          () => {
-            task.masks[i] = M.rotate(task.masks[i], 1);
-            draw();
-            KidsApp.Sound.tap();
-          },
-          'cell',
-          `${Math.floor(i / task.n) + 1}だん ${(i % task.n) + 1}ばんの みちを まわす`
-        );
-        if (!mask.length) {
-          b.disabled = true;
-          b.classList.add('rock');
-          b.textContent = '🌳';
-        } else {
-          const ns = 'http://www.w3.org/2000/svg',
-            svg = document.createElementNS(ns, 'svg');
-          svg.setAttribute('viewBox', '0 0 100 100');
-          for (const d of mask) {
-            const line = document.createElementNS(ns, 'line');
-            line.setAttribute('x1', '50');
-            line.setAttribute('y1', '50');
-            line.setAttribute('x2', String([50, 100, 50, 0][d]));
-            line.setAttribute('y2', String([0, 50, 100, 50][d]));
-            line.setAttribute('stroke', '#dca563');
-            line.setAttribute('stroke-width', '24');
-            svg.append(line);
-          }
-          b.append(svg);
+    // Buttons are built once and only their road drawings are repainted
+    // on a tap: rebuilding every cell on each tap destroyed and
+    // recreated the focused button, dropping keyboard focus each time.
+    const cells = [];
+    function paintCell(i, reachable) {
+      const b = cells[i],
+        mask = task.masks[i];
+      b.querySelectorAll('svg').forEach((s) => s.remove());
+      if (!mask.length) return;
+      const ns = 'http://www.w3.org/2000/svg',
+        svg = document.createElementNS(ns, 'svg');
+      svg.setAttribute('viewBox', '0 0 100 100');
+      for (const d of mask) {
+        const line = document.createElementNS(ns, 'line');
+        line.setAttribute('x1', '50');
+        line.setAttribute('y1', '50');
+        line.setAttribute('x2', String([50, 100, 50, 0][d]));
+        line.setAttribute('y2', String([0, 50, 100, 50][d]));
+        // Segments the road has already reached from the start get a
+        // warmer colour AND a white dashed centre line, so the progress
+        // reads by pattern as well as by colour.
+        line.setAttribute('stroke', reachable ? '#e2703a' : '#dca563');
+        line.setAttribute('stroke-width', '24');
+        svg.append(line);
+        if (reachable) {
+          const dash = document.createElementNS(ns, 'line');
+          dash.setAttribute('x1', '50');
+          dash.setAttribute('y1', '50');
+          dash.setAttribute('x2', String([50, 100, 50, 0][d]));
+          dash.setAttribute('y2', String([0, 50, 100, 50][d]));
+          dash.setAttribute('stroke', '#ffffff');
+          dash.setAttribute('stroke-width', '5');
+          dash.setAttribute('stroke-dasharray', '9 8');
+          dash.setAttribute('stroke-linecap', 'round');
+          svg.append(dash);
         }
-        if (i === 0 || i === task.n * task.n - 1)
-          b.append(el('span', 'marker', i === 0 ? '🐰' : '🏡'));
-        grid.append(b);
-      });
+      }
+      b.append(svg);
     }
+    function draw() {
+      const reachable = M.roadReachable(task.n, task.masks);
+      task.masks.forEach((_, i) => paintCell(i, reachable.has(i)));
+    }
+    task.masks.forEach((mask, i) => {
+      const b = button(
+        '',
+        () => {
+          task.masks[i] = M.rotate(task.masks[i], 1);
+          draw();
+          KidsApp.Sound.tap();
+        },
+        'cell',
+        `${Math.floor(i / task.n) + 1}だん ${(i % task.n) + 1}ばんの みちを まわす`
+      );
+      if (!mask.length) {
+        b.disabled = true;
+        b.classList.add('rock');
+        b.textContent = '🌳';
+      }
+      if (i === 0 || i === task.n * task.n - 1)
+        b.append(el('span', 'marker', i === 0 ? '🐰' : '🏡'));
+      cells.push(b);
+      grid.append(b);
+    });
     const check = button(
       'おうちへ いこう！',
       () => {
@@ -285,11 +317,11 @@
             if (!running) {
               commands.splice(i, 1);
               drawQueue();
-              KidsApp.Sound.tap();
             }
           },
           'command',
-          `${i + 1}ばんの めいれいを けす`
+          `${i + 1}ばんの めいれいを けす`,
+          { sound: 'tap' }
         );
         b.disabled = running;
         if (running && i === step) b.classList.add('active');
@@ -308,13 +340,18 @@
       ['R', '↷ みぎを むく'],
     ].forEach(([code, label]) =>
       controls.append(
-        button(label, () => {
-          if (commands.length < task.limit) {
-            commands.push(code);
-            drawQueue();
-            KidsApp.Sound.tap();
-          } else say('いっぱいだね。めいれいを おすと けせるよ。');
-        })
+        button(
+          label,
+          () => {
+            if (commands.length < task.limit) {
+              commands.push(code);
+              drawQueue();
+            } else say('いっぱいだね。めいれいを おすと けせるよ。');
+          },
+          'secondary',
+          undefined,
+          { sound: 'tap' }
+        )
       )
     );
     const run = button(
@@ -373,13 +410,18 @@
     );
     runButton = run;
     controls.append(
-      button('ぜんぶ けす', () => {
-        commands.length = 0;
-        state = { position: 0, facing: 1 };
-        drawQueue();
-        drawGrid();
-        KidsApp.Sound.tap();
-      })
+      button(
+        'ぜんぶ けす',
+        () => {
+          commands.length = 0;
+          state = { position: 0, facing: 1 };
+          drawQueue();
+          drawGrid();
+        },
+        'secondary',
+        undefined,
+        { sound: 'tap' }
+      )
     );
     board.append(
       el(
@@ -427,10 +469,10 @@
           () => {
             selected = i;
             draw();
-            KidsApp.Sound.tap();
           },
           'slot' + (selected === i ? ' selected' : ''),
-          `${i + 1}ばんの ばしょ ${icon || 'からっぽ'}`
+          `${i + 1}ばんの ばしょ ${icon || 'からっぽ'}`,
+          { sound: 'tap' }
         );
         b.setAttribute('aria-pressed', String(selected === i));
         lunch.append(b);
@@ -452,11 +494,16 @@
         )
       )
     );
-    const clear = button('えらんだ ばしょを からに', () => {
-      slots[selected] = null;
-      draw();
-      KidsApp.Sound.tap();
-    });
+    const clear = button(
+      'えらんだ ばしょを からに',
+      () => {
+        slots[selected] = null;
+        draw();
+      },
+      'secondary',
+      undefined,
+      { sound: 'tap' }
+    );
     const check = button(
       'できあがり！',
       () => {
@@ -562,10 +609,10 @@
               () => {
                 amounts[i]--;
                 draw();
-                KidsApp.Sound.tap();
               },
               'secondary',
-              icons[i] + 'を ひとつ もどす'
+              icons[i] + 'を ひとつ もどす',
+              { sound: 'tap' }
             )
           );
       });
